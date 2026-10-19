@@ -316,10 +316,16 @@
         "cd web && npm run e2e -- visitors.spec"
       ],
       "rollback": "git revert",
-      "status": "doing",
+      "status": "done",
       "notes": "Added 2026-10-19: on a shared demo the first judge's run would leave every later judge on a released programme.",
       "base": "64f711a",
-      "started_after": 24
+      "started_after": 24,
+      "evidence": [
+        "E0037",
+        "E0038",
+        "E0039",
+        "E0040"
+      ]
     },
     {
       "id": "T07",

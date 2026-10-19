@@ -39,3 +39,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# test outputs (screenshots and traces are evidence in .prod-build/, not source)
+/test-results/
+/playwright-report/
+/qa/
