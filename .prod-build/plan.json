@@ -447,7 +447,10 @@
       "writes": [
         "web/src/components/Resum*.tsx",
         "web/src/app/api/resum/**",
-        "web/e2e/**"
+        "web/e2e/**",
+        "web/src/components/Tally.tsx",
+        "web/src/lib/chain.ts",
+        "web/src/app/globals.css"
       ],
       "acceptance": [
         "AC-10"
@@ -456,8 +459,15 @@
         "cd web && npm run e2e -- resum.spec"
       ],
       "rollback": "git revert",
-      "status": "todo",
-      "notes": ""
+      "status": "done",
+      "notes": "The browser reads the Released events and counters straight from a public RPC and adds them up itself; the server route is only a fallback.",
+      "base": "cd08db4",
+      "started_after": 57,
+      "evidence": [
+        "E0058",
+        "E0059",
+        "E0060"
+      ]
     },
     {
       "id": "T11",

@@ -54,3 +54,8 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .receipt { transition: opacity 280ms var(--ease-enter), translate 280ms var(--ease-enter); }
 @starting-style { .receipt { opacity: 0; translate: 0 8px; } }
 @media (prefers-reduced-motion: reduce) { .receipt { transition: opacity 150ms ease; } @starting-style { .receipt { translate: 0 0; } } }
+dialog.resum { opacity: 0; translate: 24px 0; transition: opacity var(--dur-exit) var(--ease-exit), translate var(--dur-exit) var(--ease-exit), overlay var(--dur-exit) allow-discrete, display var(--dur-exit) allow-discrete; }
+dialog.resum[open] { opacity: 1; translate: 0 0; transition-duration: var(--dur-drawer); transition-timing-function: var(--ease-drawer); }
+@starting-style { dialog.resum[open] { opacity: 0; translate: 24px 0; } }
+dialog.resum::backdrop { background: rgb(20 27 43 / .35); }
+@media (prefers-reduced-motion: reduce) { dialog.resum, dialog.resum[open] { translate: 0 0; } }

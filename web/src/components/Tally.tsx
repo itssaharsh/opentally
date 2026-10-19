@@ -5,6 +5,7 @@ import type { ConnectionView } from "@/lib/state";
 import type { PageState as TallyState } from "@/lib/chain";
 import type { StepEvent } from "@/lib/pipeline-types";
 import rule from "@/data/rule.json";
+import { Resum } from "./Resum";
 
 import type { Preview } from "@/lib/preview";
 
@@ -246,6 +247,7 @@ export function Tally({ initial, error, demoMonth, judgeCard, record = false, pr
             <span className="flex-1" />
             <span className="font-mono text-sm">{short(r.txHash)}</span>
             <button type="button" className="h-8 px-2.5 rounded-md text-ink-muted text-sm hover:bg-surface-2" onClick={() => navigator.clipboard?.writeText(r.txHash)}>Copy hash</button>
+            {!preview && <Resum programme={state.instance} fromBlock={state.fromBlock} rpc={state.publicRpc} chainId={state.chainId} network={state.network} />}
             {state.explorer ? <a className="text-sm font-semibold no-underline flex items-center gap-1.5" href={`${state.explorer}/tx/${r.txHash}`} target="_blank" rel="noreferrer">View on Sepolia <span aria-hidden="true">↗</span></a> : <span className="text-sm text-ink-muted">local chain</span>}
           </div>
         ))}

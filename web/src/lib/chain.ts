@@ -68,7 +68,7 @@ export async function readReleases(client: PublicClient, address: Address, fromB
   return out.filter((r) => r.count > 0);
 }
 
-export type PageState = TallyState & { fresh: boolean; pinned: boolean; spares: number; lastReleased: string | null; network: string; networkShort: string };
+export type PageState = TallyState & { fresh: boolean; pinned: boolean; spares: number; lastReleased: string | null; network: string; networkShort: string; fromBlock: number; publicRpc: string };
 
 export async function readState(month = DEMO_MONTH, requested?: string | null): Promise<PageState> {
   const client = publicClient();
@@ -105,5 +105,5 @@ export async function readState(month = DEMO_MONTH, requested?: string | null): 
     releases,
   });
   const lastReleased = picked.lastReleased && picked.lastReleased.address.toLowerCase() !== address.toLowerCase() ? picked.lastReleased.address : null;
-  return { ...shaped, fresh: picked.fresh, pinned: picked.pinned, spares: picked.spares, lastReleased, network: chainCfg.label, networkShort: chainCfg.short };
+  return { ...shaped, fresh: picked.fresh, pinned: picked.pinned, spares: picked.spares, lastReleased, network: chainCfg.label, networkShort: chainCfg.short, fromBlock: Number(fromBlock), publicRpc: process.env.NEXT_PUBLIC_RPC_URL ?? chainCfg.defaultRpc };
 }
