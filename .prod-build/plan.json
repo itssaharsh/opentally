@@ -150,8 +150,16 @@
         "cd web && npm test -- state"
       ],
       "rollback": "git revert; local chain only",
-      "status": "todo",
-      "notes": ""
+      "status": "done",
+      "notes": "",
+      "base": "682c734",
+      "started_after": 7,
+      "evidence": [
+        "E0008",
+        "E0009",
+        "E0010",
+        "E0011"
+      ]
     },
     {
       "id": "T04",

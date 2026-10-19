@@ -204,6 +204,19 @@ contract OpenTally is EIP712 {
         emit Held(connectionId, reason, msg.sender);
     }
 
+    /// @notice Hold several connections in one transaction (the screen's flags for a month).
+    function holdMany(uint32[] calldata connectionIds, uint8[] calldata reasons) external onlyVerifier {
+        if (connectionIds.length != reasons.length) revert LengthMismatch();
+        for (uint256 i = 0; i < connectionIds.length; i++) {
+            uint32 id = connectionIds[i];
+            if (id >= _connections.length) revert UnknownConnection(id);
+            Connection storage c = _connections[id];
+            c.held = true;
+            c.holdReason = reasons[i];
+            emit Held(id, reasons[i], msg.sender);
+        }
+    }
+
     function lift(uint32 connectionId) external onlyVerifier {
         if (connectionId >= _connections.length) revert UnknownConnection(connectionId);
         Connection storage c = _connections[connectionId];

@@ -3,10 +3,9 @@
   "private": true,
   "version": "0.1.0",
   "description": "Mini-grid grants released by one public rule: an escrow and connection ledger on Sepolia with a tally anyone can re-sum.",
-  "workspaces": ["contracts", "web"],
   "scripts": {
-    "test": "npm test --workspace contracts && npm test --workspace web",
-    "build": "npm run build --workspace web"
+    "test": "npm --prefix contracts test && npm --prefix web test",
+    "build": "npm --prefix web run build"
   },
   "license": "MIT"
 }

@@ -106,6 +106,14 @@ describe("OpenTally", async function () {
     assert.deepEqual([...(await tally.read.eligible([1]))].map(Number), [0]);
   });
 
+  it("holdMany holds several connections in one transaction", async function () {
+    const { tally } = await deploy();
+    const verifierTally = await viem.getContractAt("OpenTally", tally.address, { client: { wallet: verifier } });
+    await verifierTally.write.holdMany([[1, 2], [1, 2]]);
+    assert.equal((await tally.read.getConnection([1])).held, true);
+    assert.equal((await tally.read.getConnection([2])).holdReason, 2);
+  });
+
   it("only the verifier can hold", async function () {
     const { tally } = await deploy();
     await viem.assertions.revertWithCustomError(tally.write.hold([0, 1]), tally, "NotVerifier");
