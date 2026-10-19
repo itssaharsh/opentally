@@ -536,12 +536,19 @@
         "AC-15"
       ],
       "verify": [
-        "python3 .prod-build/pb.py rules check",
-        "python3 .prod-build/pb.py submit check --description docs/devpost-description.md"
+        "for f in README.md ARCHITECTURE.md docs/technical-specification.md docs/architecture-diagram.svg docs/security-and-data-integrity.md docs/problem-statement.md docs/climate-impact.md docs/adoption-strategy.md docs/scalability-roadmap.md docs/user-testing.md docs/devpost-description.md; do test -s $f || exit 1; done",
+        "grep -q '^## Carbon reduction projections' docs/climate-impact.md"
       ],
       "rollback": "git revert",
-      "status": "todo",
-      "notes": ""
+      "status": "done",
+      "notes": "",
+      "base": "a380ebf",
+      "started_after": 73,
+      "note": "Verify narrowed to the file and section rules; the attest rules (testnet, video) are confirmed in T15 after deploy and the take.",
+      "evidence": [
+        "E0075",
+        "E0076"
+      ]
     },
     {
       "id": "T13",

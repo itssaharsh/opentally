@@ -18,7 +18,7 @@ console.log(`network ${netName} chain ${chainId} deployer ${deployer.account.add
 
 // gas for the operator keys on a public network
 if (netName !== "localhost") {
-  const need = netName === "sepolia" ? "0.03" : "0.003";
+  const need = netName === "sepolia" ? "0.01" : "0.003";
   for (const w of [owner, verifier]) {
     const bal = await publicClient.getBalance({ address: w.account.address });
     if (bal < parseEther(need) / 3n) {

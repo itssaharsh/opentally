@@ -1,4 +1,4 @@
-# Architecture — OpenTally
+# Architecture: OpenTally
 Mode: hackathon. Last structural change: 2026-10-19 (ADR-0001 to ADR-0004).
 
 ## Overview
@@ -37,10 +37,10 @@ flowchart LR
 | Google Fonts (next/font) | three faces | build-time fetch fails | system stacks | none |
 
 ## Key decisions
-- ADR-0001 One programme contract plus a factory, not a database — the ledger is the record the judges score; a reset is a fresh instance.
-- ADR-0002 EIP-712 summaries verified on-chain, signed server-side by demo gateway keys — the security moment (a wrong key reverts) is real, and no meter hardware exists in the window.
-- ADR-0003 A statistical screen in TypeScript, no model provider — the card's "screen that can only hold" needs no LLM; one runtime; no paid route.
-- ADR-0004 Hardhat 3 with viem and node:test; Next.js 16 on Vercel; viem in both — one client library across contracts, tests and app.
+- ADR-0001 One programme contract plus a factory, not a database: the ledger is the record the judges score; a reset is a fresh instance.
+- ADR-0002 EIP-712 summaries verified on-chain, signed server-side by demo gateway keys: the security moment (a wrong key reverts) is real, and no meter hardware exists in the window.
+- ADR-0003 A statistical screen in TypeScript, no model provider: the card's "screen that can only hold" needs no LLM; one runtime; no paid route.
+- ADR-0004 Hardhat 3 with viem and node:test; Next.js 16 on Vercel; viem in both: one client library across contracts, tests and app.
 
 ## Failure boundaries
 A reverted release changes nothing on-chain; the UI keeps prior state and names the reason. A chain outage degrades reads to the last synced state (kept in memory per server instance and in the browser) with a timestamp. The explorer being down degrades links only. The run route holds a per-instance lock and refuses a second run within two minutes; a crashed run is resumable from its last confirmed step because each step is idempotent on-chain (summaries already submitted revert with `AlreadySubmitted` and are skipped; holds are idempotent; release pays only unpaid connections).
