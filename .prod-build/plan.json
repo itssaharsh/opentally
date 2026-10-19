@@ -329,7 +329,7 @@
     },
     {
       "id": "T07",
-      "title": "Deploy to Sepolia and Vercel; verify source",
+      "title": "Deploy to Base Sepolia and Vercel; verify source",
       "objective": "token, factory and a seeded instance on Sepolia with verified source; the web app on Vercel reading them; deployment.json committed",
       "role": "deploy-reliability-reviewer",
       "size": "M",
@@ -350,11 +350,13 @@
       ],
       "verify": [
         "python3 .prod-build/pb.py smoke $DEPLOY_URL --routes / /about /rule",
-        "observe: verified source on the Sepolia explorer for OpenTally, OpenTallyFactory and TestUSD"
+        "observe: verified source on Basescan (Base Sepolia) for OpenTally, OpenTallyFactory and TestUSD"
       ],
       "rollback": "redeploy the previous Vercel deployment; a bad instance is replaced through the factory",
-      "status": "todo",
-      "notes": "blocked on Sepolia test ETH in the deployer wallet (A-4)"
+      "status": "doing",
+      "notes": "Sepolia ruled out (F-0003). Blocked on Base Sepolia test ETH in the deployer wallet.",
+      "base": "f4f55c4",
+      "started_after": 77
     },
     {
       "id": "T08",
@@ -582,7 +584,7 @@
     {
       "id": "T14",
       "title": "Final take from the frozen build",
-      "objective": "the 3-minute video recorded from the deployed URL with ?record=1&judge=0, following contract §11",
+      "objective": "the 3-minute video recorded from the deployed URL with ?record=1&judge=0, following contract \u00a711",
       "role": "product-engineer",
       "size": "S",
       "kind": "record",
@@ -592,7 +594,7 @@
       "writes": [],
       "suite": false,
       "acceptance": [
-        "WHEN the take is reviewed THE SYSTEM SHALL run at most 180 s and show every beat of §11"
+        "WHEN the take is reviewed THE SYSTEM SHALL run at most 180 s and show every beat of \u00a711"
       ],
       "verify": [
         "observe: final take recorded and under 180 s"

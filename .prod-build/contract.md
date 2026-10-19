@@ -9,13 +9,13 @@ Upstream read: hackathon-idea/ieee-climatechain-2026/ideas.json (idea OpenTally)
 
 ## 2. Scope
 MUST (core product, main workflow, judged/required):
-- An escrow and connection registry contract on Sepolia with: funder deposit of a test token; site registration with a gateway key and a payout address; connection registration; monthly summaries signed by the site gateway (EIP-712) and verified on-chain; a release rule (active days, consumption threshold, sampling window) evaluated on-chain; a verifier hold and lift; a release that pays each eligible, unheld connection's grant to its site in one transaction; events for every state change.
+- An escrow and connection registry contract on Base Sepolia with: funder deposit of a test token; site registration with a gateway key and a payout address; connection registration; monthly summaries signed by the site gateway (EIP-712) and verified on-chain; a release rule (active days, consumption threshold, sampling window) evaluated on-chain; a verifier hold and lift; a release that pays each eligible, unheld connection's grant to its site in one transaction; events for every state change.
 - A statistical screen that ranks each connection's monthly trace against its site cohort and flags clones, flat traces and outliers; it can only hold, through the verifier key.
 - The tally screen S1: two figures (escrow balance, paid count), the 50-cell ledger by site, the rule strip with the chosen parameter marked, one button that runs the month's release with five named streamed steps, the receipt row with the Sepolia hash, the how-to-judge card, the synthetic-data caption.
 - S2 connection view with the trace against the cohort, the hold reason, Lift hold and Keep hold.
 - S3 rule and keys page; S4 about page with the copy block; the re-sum drawer with JSON and CSV downloads.
 - A seed script that deploys a fresh programme instance (3 fictional sites, 50 synthetic connections, 3 planted faults, months 1 to 3 submitted) and a reset path.
-- The ten deliverables: live prototype on Sepolia, repository with README, ARCHITECTURE.md with a diagram and a technical specification, a 3-minute video, security and data integrity assessment, 2-page problem statement, climate impact assessment with projections, adoption strategy, scalability roadmap, user testing results.
+- The ten deliverables: live prototype on Base Sepolia, repository with README, ARCHITECTURE.md with a diagram and a technical specification, a 3-minute video, security and data integrity assessment, 2-page problem statement, climate impact assessment with projections, adoption strategy, scalability roadmap, user testing results.
 SHOULD (materially improves the main workflow):
 - The wrong-key summary rejection shown inside the run (step 1 reports one summary rejected and re-signed).
 - `?state=` harness for first-run, running, released, partial and error; `?record=1` and `?judge=0` flags; Alt+Shift+R reset.
@@ -56,10 +56,10 @@ J3 Re-sum: anyone presses Re-sum -> the drawer rebuilds the paid count and the a
 ## 7. Interfaces
 | Interface | Purpose | Contract file | Failure mode | Fallback |
 |---|---|---|---|---|
-| Sepolia JSON-RPC (public endpoint, env-configurable) | reads and the server-side writes | `web/src/lib/chain.ts` | rate limit, timeout, outage | reads: last synced state with the timestamp (partial); writes: the step fails with the RPC message and Retry |
+| Base Sepolia JSON-RPC (public endpoint, env-configurable) | reads and the server-side writes | `web/src/lib/chain.ts` | rate limit, timeout, outage | reads: last synced state with the timestamp (partial); writes: the step fails with the RPC message and Retry |
 | `OpenTally` contract ABI | all programme state and actions | `contracts/artifacts` -> `web/src/lib/abi.ts` (generated, committed) | revert with a named error | the step row shows the error name in plain words |
 | Server-side signer (programme key, verifier key, site gateway keys) | runs the release, sets holds, signs demo summaries | env vars on Vercel, never in the client bundle | missing key | `/api/run` returns 503 with "Demo signer not configured" |
-| Explorer links (Sepolia Etherscan) | receipt and contract links | plain links | explorer down | the hash is still shown with Copy |
+| Explorer links (Basescan, Base Sepolia) | receipt and contract links | plain links | explorer down | the hash is still shown with Copy |
 | Fonts (Google Fonts via next/font) | Source Serif 4, Public Sans, Sometype Mono | `web/src/app/layout.tsx` | fetch fails at build | system fallbacks named in the font stacks |
 | AI calls | none in the product path (the screen is statistical, no LLM) | `web/src/lib/screen.ts` | n/a | n/a |
 
@@ -115,3 +115,5 @@ the date each was read. Nothing about individual judges and no guesses about wha
 - Main result: a number: the paid-connection count rising from 0 to 47 and the escrow balance falling as the contract releases, with 3 held; on the DARES verification terms' sampling table and the NEP and UEF grant rules (real), with 50 synthetic connections, traces and three planted faults (said so on screen). The staged failure: a connection whose trace is identical to a neighbour's meter is held with both traces shown; the other 47 release.
 - Promise coverage: "Open": the public tally, the re-sum drawer and the explorer links lead the first screen with no login. "Tally": the paid count and the escrow balance are the two figures at the top left, and the ledger caption uses the word. AC-7 and AC-16.
 - Before the clock: the window opened on 5 October; this team started on 19 October with the idea package, the UI spec and this contract; nothing was built before. README sentence: "Planning started on 19 October 2026 from a research package kept outside this repository; the first commit is dated after that."
+
+Change 2026-10-19: network moved from Sepolia to Base Sepolia. Sepolia now prices contract code deposit far higher (the factory estimates at 37.8M gas, above the 16.78M per-transaction cap), so the factory cannot be deployed there; Base Sepolia estimates it at 5.3M. Release is permissionless after the window (anyone can trigger it), replacing "the owner runs the release".

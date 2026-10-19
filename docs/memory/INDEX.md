@@ -10,3 +10,4 @@ Active: 5 | archived/superseded: 0 | search: `python3 .prod-build/pb.py mem find
 | F-0001 | failure | web, build | create-next-app 16.4 enables cacheComponents, which rejects route runtime and dynamic exports | failures/F-0001-create-next-app-16-4-enables-cachecomponents-whi.md |
 | F-0002 | failure | web | Module-level state is not shared between a Next.js page and a route handler | failures/F-0002-module-level-state-is-not-shared-between-a-next-.md |
 | L-0001 | lesson | web, qa | Run browser tests against next build plus next start, not next dev, on a shared 8 GB machine | lessons/L-0001-run-browser-tests-against-next-build-plus-next-s.md |
+- F-0003 Sepolia code pricing puts the factory over the per-transaction gas cap; use Base Sepolia
