@@ -1,9 +1,9 @@
 import "server-only";
-import { createWalletClient, http, type Address, type Hex, decodeEventLog, BaseError, ContractFunctionRevertedError } from "viem";
-import { sepolia, hardhat } from "viem/chains";
+import { type Address, type Hex, decodeEventLog, BaseError, ContractFunctionRevertedError } from "viem";
 import { openTallyAbi } from "./abi";
-import { publicClient, instanceAddress, rpcUrl, deployment, DEMO_MONTH } from "./chain";
-import { roleAccount, gatewayFor, ROLE } from "./keys";
+import { publicClient, chainCfg, DEMO_MONTH, invalidateInstance } from "./chain";
+import { gatewayFor, ROLE } from "./keys";
+import { wallet } from "./wallets";
 import { screenMonth, type Trace } from "./screen";
 import programme from "../data/programme.json";
 
@@ -27,10 +27,6 @@ const SUMMARY_TYPES = {
   ],
 } as const;
 
-function chain() { return deployment.chainId === 11155111 ? sepolia : { ...hardhat, id: deployment.chainId }; }
-function wallet(index: number) {
-  return createWalletClient({ account: roleAccount(index), chain: chain(), transport: http(rpcUrl(), { timeout: 60_000 }) });
-}
 function revertName(e: unknown): { name: string; args: readonly unknown[] } | null {
   if (e instanceof BaseError) {
     const r = e.walk((x) => x instanceof ContractFunctionRevertedError);
@@ -42,9 +38,9 @@ function revertName(e: unknown): { name: string; args: readonly unknown[] } | nu
 type Conn = { id: number; code: string; siteIndex: number; traces: Record<string, number[]>; summaries: Record<string, { activeDays: number; kwhMilli: number; traceHash: Hex }> };
 const connections = (programme as unknown as { connections: Conn[] }).connections;
 
-export async function* runMonth(month = DEMO_MONTH, opts: { wrongKeyDemo?: boolean } = { wrongKeyDemo: true }): AsyncGenerator<StepEvent> {
+export async function* runMonth(address: Address, month = DEMO_MONTH, opts: { wrongKeyDemo?: boolean } = { wrongKeyDemo: true }): AsyncGenerator<StepEvent> {
   const pc = publicClient();
-  const address = await instanceAddress();
+  invalidateInstance();
   const chainId = await pc.getChainId();
   const owner = wallet(ROLE.owner);
   const verifier = wallet(ROLE.verifier);
@@ -110,7 +106,7 @@ export async function* runMonth(month = DEMO_MONTH, opts: { wrongKeyDemo?: boole
     if (left <= 0) break;
     yield { step: 4, name: STEP_NAMES[3], status: "waiting", secondsLeft: left, detail: `the sampling window closes in ${left} s (30 s on this demo instance; 14 days in the terms)`, at: now() };
     await new Promise((r) => setTimeout(r, Math.min(5000, Math.max(1000, left * 1000))));
-    if (deployment.chainId !== 11155111) {
+    if (chainCfg.minGasEth === 0) {
       // a local chain only advances when a block is mined; nudge it with an empty transaction from the owner
       try { const h = await owner.sendTransaction({ to: owner.account.address, value: 0n }); await pc.waitForTransactionReceipt({ hash: h }); } catch { /* ignore */ }
     }

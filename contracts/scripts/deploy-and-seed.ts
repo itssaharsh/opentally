@@ -18,12 +18,13 @@ console.log(`network ${netName} chain ${chainId} deployer ${deployer.account.add
 
 // gas for the operator keys on a public network
 if (netName !== "localhost") {
+  const need = netName === "sepolia" ? "0.03" : "0.003";
   for (const w of [owner, verifier]) {
     const bal = await publicClient.getBalance({ address: w.account.address });
-    if (bal < parseEther("0.01")) {
-      const h = await deployer.sendTransaction({ to: w.account.address, value: parseEther("0.03") });
+    if (bal < parseEther(need) / 3n) {
+      const h = await deployer.sendTransaction({ to: w.account.address, value: parseEther(need) });
       await publicClient.waitForTransactionReceipt({ hash: h });
-      console.log(`funded ${w.account.address} with 0.03 ETH`);
+      console.log(`funded ${w.account.address} with ${need} ETH`);
     }
   }
 }
@@ -41,14 +42,19 @@ console.log("factory", factory.address);
 const ownerFactory = await viem.getContractAt("OpenTallyFactory", factory.address, { client: { wallet: owner } });
 const windowSeconds = Number(process.env.WINDOW_SECONDS ?? RULE.windowSeconds);
 const rule = { ...RULE, windowSeconds };
-const createHash = await ownerFactory.write.create([token.address, verifier.account.address, deployer.account.address, GRANT_TUSD, rule, PROGRAMME_NAME]);
-const createReceipt = await publicClient.waitForTransactionReceipt({ hash: createHash });
-const instance = (await factory.read.latest()) as Address;
-console.log("instance", instance, "block", createReceipt.blockNumber);
-
-const tally = await viem.getContractAt("OpenTally", instance);
-await seedInstance({ viem, publicClient, tally, token, months: [1, 2, 3],
-  roles: { owner, verifier, funder: deployer, gateways: [gA, gB, gC], payouts: [pA.account.address, pB.account.address, pC.account.address] } });
+const spares = Math.max(1, Number(process.env.SPARES ?? 2));
+let instance = "0x" as Address; let firstBlock = 0n;
+for (let k = 0; k < spares; k++) {
+  const createHash = await ownerFactory.write.create([token.address, verifier.account.address, deployer.account.address, GRANT_TUSD, rule, PROGRAMME_NAME]);
+  const createReceipt = await publicClient.waitForTransactionReceipt({ hash: createHash });
+  instance = (await factory.read.latest()) as Address;
+  if (k === 0) firstBlock = createReceipt.blockNumber;
+  console.log("instance", instance, "block", createReceipt.blockNumber);
+  const tally = await viem.getContractAt("OpenTally", instance);
+  await seedInstance({ viem, publicClient, tally, token, months: [1, 2, 3],
+    roles: { owner, verifier, funder: deployer, gateways: [gA, gB, gC], payouts: [pA.account.address, pB.account.address, pC.account.address] } });
+}
+const createReceipt = { blockNumber: firstBlock };
 
 const deployment = {
   network: netName, chainId, token: token.address, factory: factory.address, instance,
@@ -56,7 +62,7 @@ const deployment = {
   accounts: { deployerFunder: deployer.account.address, owner: owner.account.address, verifier: verifier.account.address,
     gateways: [gA.account.address, gB.account.address, gC.account.address], payouts: [pA.account.address, pB.account.address, pC.account.address] },
   rule, grantTusd: 350, depositTusd: 17500,
-  explorer: chainId === 11155111 ? "https://sepolia.etherscan.io" : null,
+  explorer: chainId === 11155111 ? "https://sepolia.etherscan.io" : chainId === 84532 ? "https://sepolia.basescan.org" : null,
 };
 const outPath = process.env.DEPLOYMENT_OUT ?? "../web/src/data/deployment.json";
 writeFileSync(outPath, JSON.stringify(deployment, null, 2));

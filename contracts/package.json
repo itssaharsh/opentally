@@ -9,7 +9,8 @@
     "seed:local:test": "hardhat test test/Seed.ts",
     "export": "hardhat run scripts/export-seed.ts && hardhat run scripts/export-abi.ts",
     "deploy:local": "HH_NETWORK=localhost hardhat run scripts/deploy-and-seed.ts",
-    "deploy:sepolia": "HH_NETWORK=sepolia hardhat run scripts/deploy-and-seed.ts"
+    "deploy:sepolia": "HH_NETWORK=sepolia hardhat run scripts/deploy-and-seed.ts",
+    "deploy:base-sepolia": "HH_NETWORK=baseSepolia hardhat run scripts/deploy-and-seed.ts"
   },
   "keywords": [],
   "author": "",

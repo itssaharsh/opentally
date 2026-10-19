@@ -1,19 +1,22 @@
 import { NextResponse } from "next/server";
 import { resetInstance } from "@/lib/reset";
-import { allow, acquireRun, releaseRun } from "@/lib/limiter";
+import { allow } from "@/lib/limiter";
+import { funds } from "@/lib/wallets";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
+/** Prepare a fresh programme instance (the demo's reset). Costs test ETH only. */
 export async function POST() {
-  if (!allow("reset", 1, 10 * 60_000)) return NextResponse.json({ ok: false, error: "The demo was reset less than ten minutes ago; wait before resetting again." }, { status: 429 });
-  if (!acquireRun("reset")) return NextResponse.json({ ok: false, error: "A run is in progress." }, { status: 429 });
+  if (!allow("reset", 2, 10 * 60_000)) return NextResponse.json({ ok: false, error: "A fresh programme was prepared in the last few minutes; open the first screen to use it." }, { status: 429 });
+  const f = await funds();
+  if (!f.ok) return NextResponse.json({ ok: false, error: f.reason }, { status: 503 });
   const steps: string[] = [];
   try {
     const r = await resetInstance((s) => steps.push(s));
-    return NextResponse.json({ ok: true, instance: r.instance, txs: r.txs.length, steps });
+    return NextResponse.json({ ok: true, programme: r.instance, txs: r.txs.length, steps });
   } catch (e) {
     return NextResponse.json({ ok: false, error: (e as Error).message.split("\n")[0], steps }, { status: 502 });
-  } finally { releaseRun(); }
+  }
 }

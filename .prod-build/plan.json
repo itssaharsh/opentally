@@ -26,6 +26,7 @@
       "id": "M2",
       "goal": "Live on Sepolia and Vercel; S1 to the UI spec; S2, S3, S4 and re-sum; security moment",
       "tasks": [
+        "T07a",
         "T07",
         "T08",
         "T09",
@@ -281,6 +282,46 @@
       ]
     },
     {
+      "id": "T07a",
+      "title": "Fresh programme per visitor",
+      "objective": "the first screen opens on the newest unreleased programme instance; a run pins its instance in the URL (?programme=); after a release a spare instance is seeded in the background; the newest released instance is linked as the last visitor's release; fresh runs pause with a plain message when the demo wallet is low; chains: local, Sepolia and Base Sepolia from one config",
+      "role": "product-engineer",
+      "size": "M",
+      "deps": [
+        "T06"
+      ],
+      "writes": [
+        "web/src/lib/instances.ts",
+        "web/src/lib/chain.ts",
+        "web/src/lib/chains.ts",
+        "web/src/lib/reset.ts",
+        "web/src/lib/pipeline.ts",
+        "web/src/lib/state.ts",
+        "web/src/app/api/**",
+        "web/src/app/page.tsx",
+        "web/src/components/**",
+        "web/test/**",
+        "web/e2e/**",
+        "contracts/scripts/deploy-and-seed.ts",
+        "contracts/hardhat.config.ts"
+      ],
+      "acceptance": [
+        "WHEN a visitor opens / and an unreleased instance exists THE SYSTEM SHALL show the newest unreleased instance with 0 of 50 paid",
+        "WHEN a run starts THE SYSTEM SHALL pin the instance in the URL so a reload shows that run's result",
+        "WHEN a release completes THE SYSTEM SHALL seed a spare instance so the next visitor opens a fresh programme",
+        "IF the demo wallet cannot pay for a run THEN THE SYSTEM SHALL refuse the run with 'Fresh runs are paused: the demo wallet is low on test ETH' and show the last release"
+      ],
+      "verify": [
+        "cd web && npm test -- instances",
+        "cd web && npm run e2e -- visitors.spec"
+      ],
+      "rollback": "git revert",
+      "status": "doing",
+      "notes": "Added 2026-10-19: on a shared demo the first judge's run would leave every later judge on a released programme.",
+      "base": "64f711a",
+      "started_after": 24
+    },
+    {
       "id": "T07",
       "title": "Deploy to Sepolia and Vercel; verify source",
       "objective": "token, factory and a seeded instance on Sepolia with verified source; the web app on Vercel reading them; deployment.json committed",
@@ -288,7 +329,7 @@
       "size": "M",
       "kind": "deploy",
       "deps": [
-        "T05"
+        "T07a"
       ],
       "writes": [
         "contracts/scripts/deploy-sepolia.ts",

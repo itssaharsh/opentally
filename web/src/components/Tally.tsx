@@ -1,7 +1,8 @@
 "use client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import type { TallyState, ConnectionView } from "@/lib/state";
+import type { ConnectionView } from "@/lib/state";
+import type { PageState as TallyState } from "@/lib/chain";
 import type { StepEvent } from "@/lib/pipeline-types";
 import rule from "@/data/rule.json";
 
@@ -21,13 +22,41 @@ export function Tally({ initial, error, demoMonth, judgeCard }: Props) {
   const [runError, setRunError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
+  const [preparing, setPreparing] = useState<string | null>(null);
+  const programme = state?.instance ?? null;
+
   const refresh = useCallback(async () => {
     try {
-      const r = await fetch(`/api/state?month=${demoMonth}`, { cache: "no-store" });
+      const q = new URLSearchParams({ month: String(demoMonth) });
+      if (programme) q.set("programme", programme);
+      const r = await fetch(`/api/state?${q}`, { cache: "no-store" });
       const j = await r.json();
       if (j.ok) { setState(j.state); setStale(null); } else { setStale(j.error ?? "chain unreachable"); if (j.lastKnown) setState(j.lastKnown); }
     } catch (e) { setStale((e as Error).message); }
-  }, [demoMonth]);
+  }, [demoMonth, programme]);
+
+  function pinUrl(address: string) {
+    const q = new URLSearchParams(window.location.search);
+    q.set("programme", address);
+    window.history.replaceState(null, "", `${window.location.pathname}?${q}`);
+  }
+
+  async function prepareFresh() {
+    setPreparing("Preparing a fresh programme: registering 3 sites, 50 connections and three months of summaries on the chain.");
+    try {
+      const r = await fetch("/api/reset", { method: "POST" });
+      const j = await r.json();
+      if (!j.ok) { setPreparing(j.error ?? "Couldn't prepare a fresh programme."); return; }
+      const q = new URLSearchParams(window.location.search); q.set("programme", j.programme);
+      window.location.search = q.toString();
+    } catch (e) { setPreparing((e as Error).message); }
+  }
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.altKey && e.shiftKey && e.code === "KeyR") { e.preventDefault(); prepareFresh(); } };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
 
   const released = !!state && state.paidCount > 0;
   const current = (n: number) => events.filter((e) => e.step === n).at(-1);
@@ -36,8 +65,11 @@ export function Tally({ initial, error, demoMonth, judgeCard }: Props) {
   async function run() {
     setRunError(null); setEvents([]); setRunning(true); setLitCount(null);
     const ac = new AbortController(); abortRef.current = ac;
+    if (programme) pinUrl(programme);
     try {
-      const res = await fetch(`/api/run?month=${demoMonth}`, { method: "POST", signal: ac.signal });
+      const q = new URLSearchParams({ month: String(demoMonth) });
+      if (programme) q.set("programme", programme);
+      const res = await fetch(`/api/run?${q}`, { method: "POST", signal: ac.signal });
       if (!res.ok || !res.body) { setRunError(await res.text()); setRunning(false); return; }
       const reader = res.body.getReader(); const dec = new TextDecoder(); let buf = "";
       for (;;) {
@@ -48,6 +80,7 @@ export function Tally({ initial, error, demoMonth, judgeCard }: Props) {
           const line = p.split("\n").find((l) => l.startsWith("data: ")); if (!line) continue;
           const ev = JSON.parse(line.slice(6)) as StepEvent;
           if (ev.name === "end") { if (ev.status === "failed") setRunError(ev.detail ?? "run failed"); continue; }
+          if (ev.name === "programme") continue;
           setEvents((xs) => [...xs, ev]);
           if (ev.step === 5 && ev.status === "done") {
             await refresh();
@@ -79,7 +112,8 @@ export function Tally({ initial, error, demoMonth, judgeCard }: Props) {
     : runError ? "Retry release"
     : released ? `Released ${state!.paidCount}, held ${state!.sites.reduce((a, s) => a + s.held, 0)}`
     : `Run month ${demoMonth} release`;
-  const buttonDisabled = running || (released && !runError);
+  const inProgress = !!state && !state.fresh && !released;
+  const buttonDisabled = running || (released && !runError) || (inProgress && !running);
 
   return (
     <main className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 pt-6 sm:pt-8 pb-28 sm:pb-10 flex flex-col gap-7">
@@ -94,6 +128,9 @@ export function Tally({ initial, error, demoMonth, judgeCard }: Props) {
             </div>
             <span className="text-xl font-semibold tabular" data-testid="paid-count">{shownPaid} of {state?.total ?? 50} paid</span>
             <span className="text-sm text-ink-muted">{released ? `Month ${latest?.month ?? demoMonth} released, ${state?.sites.reduce((a, s) => a + s.held, 0)} held.` : `Month ${demoMonth - 1} complete. The sampling window closes 30 s after the next submission on this demo.`}</span>
+            {state && <span className="text-[13px] text-ink-muted" data-testid="programme" data-address={state.instance}>Programme contract {state.explorer
+              ? <a className="font-mono text-ink" href={`${state.explorer}/address/${state.instance}`} target="_blank" rel="noreferrer">{short(state.instance)}</a>
+              : <span className="font-mono text-ink">{short(state.instance)}</span>}</span>}
           </div>
           <div className="hidden sm:block">
             <button type="button" onClick={run} aria-disabled={buttonDisabled} disabled={buttonDisabled && !runError}
@@ -102,8 +139,15 @@ export function Tally({ initial, error, demoMonth, judgeCard }: Props) {
               {released && !running && !runError && <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" fill="none" /></svg>}
               <span>{buttonLabel}</span>
             </button>
-            {released && !running && !runError && <p className="mt-2 text-[13px] text-ink-muted">Demo window ends at month {demoMonth}. Reset with Alt+Shift+R to run again.</p>}
+            {released && !running && !runError && (
+              <p className="mt-2 text-[13px] text-ink-muted">This programme's demo window ends at month {demoMonth}. {state!.spares > 0
+                ? <a href="/" className="font-semibold text-ink">Open a fresh programme</a>
+                : <button type="button" onClick={prepareFresh} className="font-semibold text-ink underline">Prepare a fresh programme</button>} to run it again.</p>
+            )}
+            {inProgress && !running && <p className="mt-2 text-[13px] text-ink-muted">Month {demoMonth}'s summaries are already in on this programme: someone else is running it. <a href="/" className="font-semibold text-ink">Open a fresh programme</a>.</p>}
             {runError && <p className="mt-2 text-sm text-danger">{runError}</p>}
+            {preparing && <p className="mt-2 text-[13px] text-ink-muted" role="status">{preparing}</p>}
+            {state?.fresh && state.lastReleased && !running && <p className="mt-2 text-[13px] text-ink-muted">A previous visitor ran this demo on another programme. <a href={`/?programme=${state.lastReleased}`} className="font-semibold text-ink">See that release</a>.</p>}
           </div>
           {judgeCard && (
             <section aria-label="How to judge this in 90 seconds" className="bg-surface-1 border border-line rounded-lg px-4 py-4 text-sm flex flex-col gap-2">

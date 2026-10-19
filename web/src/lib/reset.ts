@@ -1,10 +1,12 @@
 import "server-only";
-import { createWalletClient, http, type Address, type Hex } from "viem";
-import { sepolia, hardhat } from "viem/chains";
+import { keccak256, toHex, type Address, type Hex } from "viem";
 import { openTallyAbi, openTallyFactoryAbi, testUSDAbi } from "./abi";
-import { publicClient, rpcUrl, deployment, invalidateInstance } from "./chain";
+import { publicClient, deployment, invalidateInstance, listInstances } from "./chain";
 import { roleAccount, gatewayFor, ROLE } from "./keys";
+import { wallet, topUp, funds } from "./wallets";
+import { isFresh } from "./instances";
 import programme from "../data/programme.json";
+import { store } from "./store";
 
 type Conn = { id: number; code: string; siteIndex: number; meterSerial: string; gpsCell: string; commissionedAt: number; summaries: Record<string, { activeDays: number; kwhMilli: number; traceHash: Hex }> };
 type Programme = { programmeName: string; sites: { code: string; name: string; town: string; count: number }[]; connections: Conn[] };
@@ -17,14 +19,13 @@ const SUMMARY_TYPES = {
   ],
 } as const;
 
-function chain() { return deployment.chainId === 11155111 ? sepolia : { ...hardhat, id: deployment.chainId }; }
-function wallet(index: number) { return createWalletClient({ account: roleAccount(index), chain: chain(), transport: http(rpcUrl(), { timeout: 60_000 }) }); }
-const keccakOf = async (s: string) => (await import("viem")).keccak256((await import("viem")).toHex(s));
+const keccakOf = (s: string) => keccak256(toHex(s));
 
 /// Creates a fresh programme instance through the factory, registers the demo world, deposits the pool and submits
 /// months 1 to 3. Costs test ETH only. Returns the new instance address.
 export async function resetInstance(onStep?: (s: string) => void): Promise<{ instance: Address; txs: Hex[] }> {
   const pc = publicClient();
+  await topUp();
   const chainId = await pc.getChainId();
   const owner = wallet(ROLE.owner);
   const funder = wallet(0);
@@ -47,7 +48,7 @@ export async function resetInstance(onStep?: (s: string) => void): Promise<{ ins
   }
   onStep?.("Registering 50 connections");
   const inputs = [] as { siteId: number; meterHash: Hex; customerHash: Hex; gpsCell: Hex; commissionedAt: bigint }[];
-  for (const cn of data.connections) inputs.push({ siteId: cn.siteIndex, meterHash: await keccakOf(cn.meterSerial), customerHash: await keccakOf(`customer:${cn.code}`), gpsCell: await keccakOf(cn.gpsCell), commissionedAt: BigInt(cn.commissionedAt) });
+  for (const cn of data.connections) inputs.push({ siteId: cn.siteIndex, meterHash: keccakOf(cn.meterSerial), customerHash: keccakOf(`customer:${cn.code}`), gpsCell: keccakOf(cn.gpsCell), commissionedAt: BigInt(cn.commissionedAt) });
   for (let i = 0; i < inputs.length; i += 25) await wait(await owner.writeContract({ ...c, functionName: "registerConnections", args: [inputs.slice(i, i + 25)] }));
 
   onStep?.("Depositing 17,500 tUSD");
@@ -63,4 +64,22 @@ export async function resetInstance(onStep?: (s: string) => void): Promise<{ ins
   }
   invalidateInstance();
   return { instance, txs };
+}
+
+/** Seed spare instances until `want` fresh ones exist. One seeding at a time per server instance; duplicates on-chain are harmless. */
+export async function ensureSpares(want = 2): Promise<number> {
+  if (store.seeding) { await store.seeding.catch(() => null); }
+  const run = (async () => {
+    invalidateInstance();
+    let fresh = (await listInstances()).filter(isFresh).length;
+    while (fresh < want) {
+      const f = await funds();
+      if (!f.ok) break;
+      await resetInstance();
+      fresh++;
+    }
+    return fresh;
+  })();
+  store.seeding = run;
+  try { return (await run) as number; } finally { store.seeding = null; }
 }

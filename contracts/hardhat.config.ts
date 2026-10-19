@@ -33,6 +33,12 @@ export default defineConfig({
       chainType: "l1",
       url: "http://127.0.0.1:8545",
     },
+    baseSepolia: {
+      type: "http",
+      chainType: "op",
+      url: configVariable("BASE_SEPOLIA_RPC_URL"),
+      accounts: { mnemonic: configVariable("DEMO_MNEMONIC"), count: 9 },
+    },
     sepolia: {
       type: "http",
       chainType: "l1",
