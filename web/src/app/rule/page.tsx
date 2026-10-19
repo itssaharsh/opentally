@@ -10,7 +10,8 @@ const KEYS = [
   { role: "Funder", holds: "the programme's funder", can: "deposit grant money into the escrow", cannot: "release, hold or change the rule" },
   { role: "Site gateway (one per site)", holds: "the site's metering gateway", can: "sign that site's monthly summaries", cannot: "sign for another site, change the rule or move money" },
   { role: "Verifier", holds: "the independent verification agent", can: "hold and lift a connection", cannot: "release money or withdraw the escrow" },
-  { role: "Programme operator", holds: "the programme manager", can: "register sites and connections, submit signed summaries, run the release", cannot: "pay a held connection, pay twice, or release before the window closes" },
+  { role: "Programme operator", holds: "the programme manager", can: "register sites and connections, submit signed summaries", cannot: "forge a site's signature, pay a held connection, pay twice, or release before the window closes" },
+  { role: "Anyone", holds: "no key at all", can: "trigger the release once the sampling window has closed, and re-add every total", cannot: "choose who is paid: the rule decides" },
 ];
 
 export default async function RulePage() {

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { openTallyAbi } from "@/lib/abi";
-import { publicClient, instanceFor } from "@/lib/chain";
+import { publicClient, instanceFor, UnknownProgramme } from "@/lib/chain";
 import { resum, toCsv, type ReleasedRecord } from "@/lib/resum";
 
 export const runtime = "nodejs";
@@ -25,6 +25,7 @@ export async function GET(req: Request) {
     if (format === "csv") return new Response(toCsv(records), { headers: { "content-type": "text/csv", "content-disposition": `attachment; filename="opentally-releases-${address.slice(0, 10)}.csv"` } });
     return NextResponse.json({ ok: true, programme: address, records, result, computedAt: new Date().toISOString() });
   } catch (e) {
+    if (e instanceof UnknownProgramme) return NextResponse.json({ ok: false, error: e.message }, { status: 400 });
     return NextResponse.json({ ok: false, error: (e as Error).message.split("\n")[0] }, { status: 503 });
   }
 }

@@ -485,7 +485,11 @@
         "web/src/app/api/**",
         "web/next.config.ts",
         "docs/security-and-data-integrity.md",
-        "web/test/**"
+        "web/test/**",
+        "web/src/lib/keys.ts",
+        "web/src/lib/chain.ts",
+        "web/scripts/**",
+        "web/package.json"
       ],
       "acceptance": [
         "AC-1 shown in the run",
@@ -494,12 +498,23 @@
       ],
       "verify": [
         "cd web && npm test -- limiter",
-        "cd web && npm run build && ! grep -rE '0x[0-9a-fA-F]{64}' .next/static",
-        "python3 .prod-build/pb.py rules check"
+        "cd web && npm test -- security",
+        "cd web && npm run build && npm run secret-scan",
+        "test -s docs/security-and-data-integrity.md"
       ],
       "rollback": "git revert",
-      "status": "todo",
-      "notes": ""
+      "status": "done",
+      "notes": "Verify changed: the client-bundle check derives the demo and Hardhat keys and searches for them (a raw 64-hex grep matches viem constants such as zeroHash); rules check moves to T12, which writes the remaining documents.",
+      "base": "cec9247",
+      "started_after": 60,
+      "evidence": [
+        "E0068",
+        "E0069",
+        "E0070",
+        "E0071",
+        "E0072",
+        "E0073"
+      ]
     },
     {
       "id": "T12",

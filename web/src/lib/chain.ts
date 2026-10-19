@@ -52,9 +52,13 @@ export async function resolveInstance(requested?: string | null): Promise<Picked
   return pickInstance(await listInstances(), requested, busyInstances());
 }
 
-/** The instance address for a request, accepted only if the factory created it. */
+export class UnknownProgramme extends Error {}
+
+/** The instance address for a write or a re-sum. A programme named in the request must be one the factory created. */
 export async function instanceFor(requested?: string | null): Promise<{ address: Address; fromBlock: bigint; fresh: boolean }> {
+  if (requested && !/^0x[0-9a-fA-F]{40}$/.test(requested)) throw new UnknownProgramme("programme must be a contract address");
   const p = await resolveInstance(requested);
+  if (requested && !p.pinned) throw new UnknownProgramme("that programme was not created by this site's factory");
   return { address: p.shown.address as Address, fromBlock: p.shown.fromBlock, fresh: p.fresh };
 }
 

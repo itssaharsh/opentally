@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "e2e:pipeline": "vitest run --config vitest.e2e.config.ts e2e/pipeline.e2e.ts",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "secret-scan": "node scripts/secret-scan.mjs"
   },
   "dependencies": {
     "next": "16.4.2",

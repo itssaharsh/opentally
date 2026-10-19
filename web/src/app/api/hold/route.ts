@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { openTallyAbi } from "@/lib/abi";
-import { publicClient, instanceFor, invalidateInstance } from "@/lib/chain";
+import { publicClient, instanceFor, invalidateInstance, UnknownProgramme } from "@/lib/chain";
 import { ROLE } from "@/lib/keys";
 import { wallet } from "@/lib/wallets";
 import { allow } from "@/lib/limiter";
@@ -14,7 +14,9 @@ export async function POST(req: Request) {
   const body = (await req.json().catch(() => ({}))) as { id?: number; action?: "lift" | "keep" | "hold"; reason?: number; programme?: string };
   if (typeof body.id !== "number" || !Number.isInteger(body.id) || body.id < 0 || body.id > 10_000 || !body.action) return NextResponse.json({ ok: false, error: "id and action are required" }, { status: 400 });
   if (!["lift", "keep", "hold"].includes(body.action)) return NextResponse.json({ ok: false, error: "action must be lift, keep or hold" }, { status: 400 });
-  const { address } = await instanceFor(body.programme);
+  let address: `0x${string}`;
+  try { ({ address } = await instanceFor(body.programme)); }
+  catch (e) { if (e instanceof UnknownProgramme) return NextResponse.json({ ok: false, error: e.message }, { status: 400 }); throw e; }
   if (body.action === "keep") return NextResponse.json({ ok: true, action: "keep", id: body.id, programme: address });
   const verifier = wallet(ROLE.verifier);
   try {

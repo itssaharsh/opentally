@@ -10,8 +10,8 @@ import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 /// @notice A funder deposits the grant pool; site gateways sign monthly consumption summaries; the contract
 ///         verifies the signatures, applies the programme's rule after the sampling window, skips anything the
 ///         verifier has held, and pays each eligible connection's grant to its site in one transaction.
-/// @dev Roles: owner (the programme operator: registers sites and connections, submits summaries, runs the
-///      release), verifier (hold and lift only), funder (deposit only). Site gateways only sign.
+/// @dev Roles: owner (the programme operator: registers sites and connections, submits summaries), verifier (hold
+///      and lift only), funder (deposit only). Site gateways only sign. Release is open to anyone once the window closes.
 contract OpenTally is EIP712 {
     using SafeERC20 for IERC20;
 
@@ -254,8 +254,9 @@ contract OpenTally is EIP712 {
     }
 
     /// @notice Pay every eligible, unheld connection's grant to its site, once the sampling window has closed.
-    ///         Calling it again pays nothing and says so: ReleaseBatch(month, 0, 0).
-    function release(uint32 month) external onlyOwner {
+    ///         Anyone may call it: the rule decides who is paid, not the caller. Calling it again pays nothing
+    ///         and says so: ReleaseBatch(month, 0, 0).
+    function release(uint32 month) external {
         uint64 submittedAt = batchSubmittedAt[month];
         if (submittedAt == 0) revert NothingSubmitted(month);
         uint64 closesAt = submittedAt + rule.windowSeconds;

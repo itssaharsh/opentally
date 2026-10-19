@@ -1,11 +1,11 @@
 {
   "network": "localhost",
   "chainId": 31337,
-  "token": "0x68b1d87f95878fe05b998f19b66f4baba5de1aed",
-  "factory": "0x3aa5ebb10dc797cac828524e59a333d0a371443c",
-  "instance": "0x4374EEcaAD0Dcaa149CfFc160d5a0552B1D092b0",
-  "deployBlock": 129,
-  "deployedAt": "2026-10-19T16:32:46.539Z",
+  "token": "0xcbeaf3bde82155f56486fb5a1072cb8baaf547cc",
+  "factory": "0x1429859428c0abc9c2c47c8ee9fbaf82cfa0f20f",
+  "instance": "0xd79Df1927718b3212FA6E126Ec4Ad2b3Ee1263D9",
+  "deployBlock": 415,
+  "deployedAt": "2026-10-19T17:29:04.133Z",
   "accounts": {
     "deployerFunder": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
     "owner": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",

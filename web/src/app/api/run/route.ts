@@ -1,6 +1,6 @@
 import { after } from "next/server";
 import { runMonth } from "@/lib/pipeline";
-import { instanceFor, invalidateInstance } from "@/lib/chain";
+import { instanceFor, invalidateInstance, UnknownProgramme } from "@/lib/chain";
 import { acquireRun, releaseRun, allow, busyInstances } from "@/lib/limiter";
 import { funds } from "@/lib/wallets";
 import { ensureSpares } from "@/lib/reset";
@@ -14,7 +14,9 @@ export async function POST(req: Request) {
   if (!allow(`run:${ip}`, 3, 10 * 60_000)) return new Response("Too many runs from this address; try again in a few minutes.", { status: 429 });
   const url = new URL(req.url);
   const month = Number(url.searchParams.get("month") ?? 4);
-  const inst = await instanceFor(url.searchParams.get("programme"));
+  let inst: Awaited<ReturnType<typeof instanceFor>>;
+  try { inst = await instanceFor(url.searchParams.get("programme")); }
+  catch (e) { if (e instanceof UnknownProgramme) return new Response(e.message, { status: 400 }); throw e; }
   if (!inst.fresh) {
     if (busyInstances().has(inst.address.toLowerCase())) return new Response("A release is already running on this programme; wait for it to finish.", { status: 429 });
     return new Response("This programme has already been released. Open a fresh one from the first screen.", { status: 409 });

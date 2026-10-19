@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { BaseError, ContractFunctionRevertedError, decodeEventLog } from "viem";
 import { openTallyAbi } from "@/lib/abi";
-import { publicClient, instanceFor, invalidateInstance, DEMO_MONTH } from "@/lib/chain";
+import { publicClient, instanceFor, invalidateInstance, DEMO_MONTH, UnknownProgramme } from "@/lib/chain";
 import { ROLE } from "@/lib/keys";
 import { wallet } from "@/lib/wallets";
 import { allow } from "@/lib/limiter";
@@ -15,7 +15,9 @@ export async function POST(req: Request) {
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "local";
   if (!allow(`release:${ip}`, 5, 10 * 60_000)) return NextResponse.json({ ok: false, error: "Too many releases from this address; wait a few minutes." }, { status: 429 });
   const url = new URL(req.url);
-  const { address } = await instanceFor(url.searchParams.get("programme"));
+  let address: `0x${string}`;
+  try { ({ address } = await instanceFor(url.searchParams.get("programme"))); }
+  catch (e) { if (e instanceof UnknownProgramme) return NextResponse.json({ ok: false, error: e.message }, { status: 400 }); throw e; }
   const pc = publicClient();
   try {
     const hash = await wallet(ROLE.owner).writeContract({ address, abi: openTallyAbi, functionName: "release", args: [DEMO_MONTH] });

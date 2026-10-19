@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 640" role="img" aria-labelledby="t d" font-family="Public Sans, Helvetica, Arial, sans-serif">
+  <title id="t">OpenTally architecture</title>
+  <desc id="d">Site gateways sign monthly summaries; the run pipeline submits them to the OpenTally contract, screens traces and holds through the verifier key, and triggers the release after the sampling window; the contract pays each site; the browser re-adds the totals from the chain.</desc>
+  <rect width="1200" height="640" fill="#FBFAF6"/>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#141B2B"/></marker>
+  </defs>
+  <g font-size="15" fill="#141B2B">
+    <!-- people and keys -->
+    <rect x="40" y="60" width="220" height="74" rx="8" fill="#fff" stroke="#7E7B70"/><text x="60" y="92" font-weight="700">Site gateways (3)</text><text x="60" y="116" font-size="13" fill="#5B6070">sign each month's summaries</text>
+    <rect x="40" y="200" width="220" height="74" rx="8" fill="#fff" stroke="#7E7B70"/><text x="60" y="232" font-weight="700">Funder</text><text x="60" y="256" font-size="13" fill="#5B6070">deposits the grant pool</text>
+    <rect x="40" y="340" width="220" height="74" rx="8" fill="#fff" stroke="#7E7B70"/><text x="60" y="372" font-weight="700">Verifier</text><text x="60" y="396" font-size="13" fill="#5B6070">holds and lifts; cannot pay</text>
+    <rect x="40" y="480" width="220" height="74" rx="8" fill="#fff" stroke="#7E7B70"/><text x="60" y="512" font-weight="700">Anyone</text><text x="60" y="536" font-size="13" fill="#5B6070">triggers the release; re-adds totals</text>
+
+    <!-- web app -->
+    <rect x="340" y="40" width="360" height="300" rx="10" fill="#EEECE4"/>
+    <text x="360" y="70" font-weight="700">Web app (Next.js on Vercel)</text>
+    <rect x="360" y="90" width="320" height="60" rx="6" fill="#fff" stroke="#D9D6CC"/><text x="376" y="116" font-weight="600">Run pipeline  /api/run</text><text x="376" y="138" font-size="13" fill="#5B6070">sign, submit, screen, hold, wait, release</text>
+    <rect x="360" y="164" width="320" height="56" rx="6" fill="#fff" stroke="#D9D6CC"/><text x="376" y="190" font-weight="600">Screen  lib/screen.ts</text><text x="376" y="210" font-size="13" fill="#5B6070">clones, flat traces, outliers; can only hold</text>
+    <rect x="360" y="234" width="320" height="86" rx="6" fill="#fff" stroke="#D9D6CC"/><text x="376" y="260" font-weight="600">Tally, connection, rule pages</text><text x="376" y="282" font-size="13" fill="#5B6070">read state from the chain</text><text x="376" y="302" font-size="13" fill="#5B6070">demo keys held server-side only</text>
+
+    <!-- chain -->
+    <rect x="780" y="40" width="380" height="420" rx="10" fill="#fff" stroke="#141B2B" stroke-width="2"/>
+    <text x="800" y="72" font-weight="700">OpenTally contract (testnet)</text>
+    <text x="800" y="104" font-size="13">escrow of the grant pool (tUSD)</text>
+    <text x="800" y="128" font-size="13">sites, connections (hashes only)</text>
+    <text x="800" y="152" font-size="13">summaries: EIP-712 signature per site</text>
+    <text x="800" y="176" font-size="13">rule: days active, kWh, sampling window</text>
+    <text x="800" y="200" font-size="13">holds by the verifier</text>
+    <text x="800" y="224" font-size="13">release: pays every eligible, unheld connection</text>
+    <text x="800" y="248" font-size="13">events: Released, ReleaseBatch, Held, Lifted</text>
+    <rect x="800" y="276" width="340" height="56" rx="6" fill="#EEECE4"/><text x="816" y="302" font-weight="600">Factory</text><text x="816" y="322" font-size="13" fill="#5B6070">a fresh programme per visitor</text>
+    <rect x="800" y="352" width="340" height="90" rx="6" fill="#1F9D55"/><text x="816" y="380" font-weight="700" fill="#141B2B">Site payout addresses</text><text x="816" y="404" font-size="13" fill="#141B2B">one transfer per site per release</text><text x="816" y="426" font-size="13" fill="#141B2B">47 of 50 paid on the demo</text>
+
+    <!-- browser re-sum -->
+    <rect x="340" y="420" width="360" height="120" rx="10" fill="#fff" stroke="#7E7B70"/>
+    <text x="360" y="452" font-weight="700">Visitor's browser: re-sum</text>
+    <text x="360" y="478" font-size="13" fill="#5B6070">reads Released events and counters</text>
+    <text x="360" y="500" font-size="13" fill="#5B6070">straight from a public RPC endpoint,</text>
+    <text x="360" y="522" font-size="13" fill="#5B6070">adds them up, compares, downloads</text>
+  </g>
+  <g stroke="#141B2B" stroke-width="2" fill="none" marker-end="url(#a)">
+    <path d="M260 97 H352"/>
+    <path d="M680 120 H772"/>
+    <path d="M520 150 V160"/>
+    <path d="M260 237 C 560 237, 600 360, 772 300"/>
+    <path d="M260 377 C 540 377, 560 200, 772 200"/>
+    <path d="M260 517 H332"/>
+    <path d="M772 400 C 740 480, 720 480, 708 480"/>
+  </g>
+  <g font-size="12" fill="#5B6070">
+    <text x="272" y="88">signed summaries</text>
+    <text x="690" y="112">submit, hold, release</text>
+    <text x="440" y="226">deposit</text>
+    <text x="560" y="396">hold or lift</text>
+    <text x="270" y="508">opens</text>
+    <text x="712" y="470">events</text>
+  </g>
+</svg>

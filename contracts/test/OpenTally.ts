@@ -114,6 +114,18 @@ describe("OpenTally", async function () {
     assert.equal((await tally.read.getConnection([2])).holdReason, 2);
   });
 
+  it("anyone can trigger the release once the window closes, and it pays only by the rule", async function () {
+    const { tally, token } = await deploy();
+    const ss = [good(0), good(1), good(2), good(3)];
+    const sigs = [await sign(gatewayA, tally.address, ss[0]), await sign(gatewayA, tally.address, ss[1]),
+                  await sign(gatewayB, tally.address, ss[2]), await sign(gatewayB, tally.address, ss[3])];
+    await tally.write.submitSummaries([1, ss, sigs]);
+    await networkHelpers.time.increase(RULE.windowSeconds + 1);
+    const stranger = await viem.getContractAt("OpenTally", tally.address, { client: { wallet: payoutB } });
+    await viem.assertions.emitWithArgs(stranger.write.release([1]), tally, "ReleaseBatch", [1, 4, GRANT * 4n]);
+    assert.equal(await token.read.balanceOf([payoutA.account.address]), GRANT * 2n);
+  });
+
   it("only the verifier can hold", async function () {
     const { tally } = await deploy();
     await viem.assertions.revertWithCustomError(tally.write.hold([0, 1]), tally, "NotVerifier");
