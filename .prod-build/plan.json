@@ -409,7 +409,11 @@
         "web/src/app/about/**",
         "web/src/components/**",
         "web/src/data/rule.json",
-        "web/e2e/**"
+        "web/e2e/**",
+        "web/src/lib/connection.ts",
+        "web/src/app/api/release/**",
+        "web/src/app/not-found.tsx",
+        "web/src/data/links.json"
       ],
       "acceptance": [
         "AC-11",
@@ -420,8 +424,16 @@
         "cd web && npm run typecheck"
       ],
       "rollback": "git revert",
-      "status": "todo",
-      "notes": ""
+      "status": "done",
+      "notes": "Added a release route for connections made eligible by a lifted hold, so the lift visibly pays (48 of 50).",
+      "base": "34f62c7",
+      "started_after": 49,
+      "evidence": [
+        "E0054",
+        "E0055",
+        "E0056",
+        "E0057"
+      ]
     },
     {
       "id": "T10",

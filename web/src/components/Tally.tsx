@@ -45,6 +45,19 @@ export function Tally({ initial, error, demoMonth, judgeCard, record = false, pr
     window.history.replaceState(null, "", `${window.location.pathname}?${q}`);
   }
 
+  const [relNote, setRelNote] = useState<string | null>(null);
+  async function releaseLifted() {
+    if (!programme) return;
+    setRelNote("Releasing the connections that became eligible after a lifted hold.");
+    try {
+      const r = await fetch(`/api/release?programme=${programme}`, { method: "POST" });
+      const j = await r.json();
+      if (!j.ok) { setRelNote(j.error ?? "The release didn't go through."); return; }
+      setRelNote(`Released ${j.count} more in one transaction.`);
+      await refresh();
+    } catch (e) { setRelNote((e as Error).message); }
+  }
+
   async function prepareFresh() {
     setPreparing("Preparing a fresh programme: registering 3 sites, 50 connections and three months of summaries on the chain.");
     try {
@@ -124,6 +137,7 @@ export function Tally({ initial, error, demoMonth, judgeCard, record = false, pr
     : released ? `Released ${state!.paidCount}, held ${state!.sites.reduce((a, s) => a + s.held, 0)}`
     : `Run month ${demoMonth} release`;
   const inProgress = !!state && !state.fresh && !released;
+  const eligibleLeft = state ? state.sites.reduce((a, s) => a + s.eligible, 0) : 0;
   const buttonDisabled = !state || running || (released && !runError) || (inProgress && !running);
 
   return (
@@ -158,6 +172,12 @@ export function Tally({ initial, error, demoMonth, judgeCard, record = false, pr
                 ? <a href="/" className="font-semibold text-ink">Open a fresh programme</a>
                 : <button type="button" onClick={prepareFresh} className="font-semibold text-ink underline">Prepare a fresh programme</button>} to run it again.</p>
             )}
+            {released && !running && !preview && eligibleLeft > 0 && (
+              <button type="button" onClick={releaseLifted} disabled={!!relNote && relNote.startsWith("Releasing")} className="mt-3 h-10 w-full rounded-md bg-surface-2 text-ink font-semibold text-sm" data-testid="release-lifted">
+                Release {eligibleLeft} eligible connection{eligibleLeft === 1 ? "" : "s"}
+              </button>
+            )}
+            {relNote && <p className="mt-2 text-[13px] text-ink-muted" role="status">{relNote}</p>}
             {inProgress && !running && <p className="mt-2 text-[13px] text-ink-muted">Month {demoMonth}'s summaries are already in on this programme: someone else is running it. <a href="/" className="font-semibold text-ink">Open a fresh programme</a>.</p>}
             {runError && <p className="mt-2 text-sm text-danger">{runError}</p>}
             {preparing && <p className="mt-2 text-[13px] text-ink-muted" role="status">{preparing}</p>}
@@ -190,7 +210,7 @@ export function Tally({ initial, error, demoMonth, judgeCard, record = false, pr
                 {s.connections.map((c) => {
                   const st = shownState(c);
                   return (
-                    <Link key={c.id} href={`/connection/${c.id}`} className="cell" data-state={st} data-testid={`cell-${c.code}`}
+                    <Link key={c.id} href={`/connection/${c.id}?programme=${state.instance}`} className="cell" data-state={st} data-testid={`cell-${c.code}`}
                       title={st === "paid" ? `${c.code}, paid in month ${c.paidMonth}` : st === "held" ? `${c.code}, held` : st === "eligible" ? `${c.code}, eligible: rule met` : `${c.code}, pending`}>
                       {st === "paid" && <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" stroke="var(--ink)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none" /></svg>}
                       {st === "held" && <span aria-hidden="true">H</span>}
