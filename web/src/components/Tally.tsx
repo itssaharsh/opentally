@@ -6,20 +6,24 @@ import type { PageState as TallyState } from "@/lib/chain";
 import type { StepEvent } from "@/lib/pipeline-types";
 import rule from "@/data/rule.json";
 
-type Props = { initial: TallyState | null; error?: string | null; demoMonth: number; judgeCard: boolean };
+import type { Preview } from "@/lib/preview";
+
+type Props = { initial: TallyState | null; error?: string | null; demoMonth: number; judgeCard: boolean; record?: boolean; preview?: Preview | null };
 
 const STEP_NAMES = ["Verifying 50 site-signed summaries", "Screening traces against each site", "Applying the rule", "Checking the sampling window", "Sending the release"];
 
 function fmt(n: number, digits = 0) { return n.toLocaleString("en-US", { maximumFractionDigits: digits, minimumFractionDigits: digits }); }
 function short(h: string) { return h.length > 12 ? `${h.slice(0, 6)}…${h.slice(-4)}` : h; }
 
-export function Tally({ initial, error, demoMonth, judgeCard }: Props) {
-  const [state, setState] = useState<TallyState | null>(initial);
-  const [stale, setStale] = useState<string | null>(error ?? null);
-  const [running, setRunning] = useState(false);
-  const [events, setEvents] = useState<StepEvent[]>([]);
+export function Tally({ initial, error, demoMonth, judgeCard, record = false, preview = null }: Props) {
+  const [state, setState] = useState<TallyState | null>(preview?.state ?? initial);
+  const [stale, setStale] = useState<string | null>(preview?.stale ?? error ?? null);
+  const [running, setRunning] = useState(preview?.running ?? false);
+  const [events, setEvents] = useState<StepEvent[]>(preview?.events ?? []);
   const [litCount, setLitCount] = useState<number | null>(null); // progressive lighting after release
-  const [runError, setRunError] = useState<string | null>(null);
+  const [runError, setRunError] = useState<string | null>(preview?.runError ?? null);
+  const [runStartedAt, setRunStartedAt] = useState<number | null>(null);
+  const [runEndedAt, setRunEndedAt] = useState<number | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   const [preparing, setPreparing] = useState<string | null>(null);
@@ -63,7 +67,8 @@ export function Tally({ initial, error, demoMonth, judgeCard }: Props) {
   const lastStep = events.filter((e) => e.step > 0).at(-1);
 
   async function run() {
-    setRunError(null); setEvents([]); setRunning(true); setLitCount(null);
+    if (preview) return;
+    setRunError(null); setEvents([]); setRunning(true); setLitCount(null); setRunStartedAt(Date.now()); setRunEndedAt(null);
     const ac = new AbortController(); abortRef.current = ac;
     if (programme) pinUrl(programme);
     try {
@@ -93,10 +98,16 @@ export function Tally({ initial, error, demoMonth, judgeCard }: Props) {
         }
       }
     } catch (e) { setRunError((e as Error).message); }
-    finally { setRunning(false); abortRef.current = null; }
+    finally { setRunning(false); abortRef.current = null; setRunEndedAt(Date.now()); }
   }
 
-  useEffect(() => { if (!initial) refresh(); }, [initial, refresh]);
+  useEffect(() => { if (!initial && !preview) refresh(); }, [initial, preview, refresh]);
+  useEffect(() => {
+    if (!stale || preview) return;
+    const onFocus = () => refresh();
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, [stale, preview, refresh]);
 
   // which cells are shown as paid: all paid ones once lighting is complete or not animating
   const paidOrder = useMemo(() => state ? state.sites.flatMap((s) => s.connections.filter((c) => c.state === "paid").map((c) => c.id)) : [], [state]);
@@ -107,27 +118,30 @@ export function Tally({ initial, error, demoMonth, judgeCard }: Props) {
   const shownBalance = state && litSet && litCount !== null && litCount < paidOrder.length ? state.escrowTusd + (paidOrder.length - litCount) * 350 : balance;
   const shownPaid = state && litSet && litCount !== null ? Math.min(litCount, state.paidCount) : (state?.paidCount ?? 0);
   const latest = state?.releases.at(-1);
-  const buttonLabel = running
+  const buttonLabel = !state ? "Waiting for the chain" : running
     ? `Releasing, step ${lastStep?.step ?? 1} of 5`
     : runError ? "Retry release"
     : released ? `Released ${state!.paidCount}, held ${state!.sites.reduce((a, s) => a + s.held, 0)}`
     : `Run month ${demoMonth} release`;
   const inProgress = !!state && !state.fresh && !released;
-  const buttonDisabled = running || (released && !runError) || (inProgress && !running);
+  const buttonDisabled = !state || running || (released && !runError) || (inProgress && !running);
 
   return (
     <main className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 pt-6 sm:pt-8 pb-28 sm:pb-10 flex flex-col gap-7">
-      {stale && <p className="text-sm text-ink-muted bg-surface-sunken rounded-lg px-4 py-2">Chain unreachable since {new Date().toLocaleTimeString()}, showing the last synced state. ({stale})</p>}
+      {preview && <p className="text-sm font-semibold bg-[var(--warning)] text-white rounded-lg px-4 py-2 m-0" data-testid="preview-banner">Preview of the {preview.name} state, built from this programme&apos;s data. Nothing here ran.</p>}
+      {stale && <p className="text-sm text-ink-muted bg-surface-sunken rounded-lg px-4 py-2 m-0" role="status" data-testid="stale">{state ? `Chain unreachable since ${new Date(state.syncedAt).toUTCString().slice(17, 22)} UTC, showing the last synced state.` : "Chain unreachable, and nothing has been synced yet. Retrying when the page is focused."}</p>}
       <div className="grid grid-cols-12 gap-6 items-start">
         <section className="col-span-12 md:col-span-4 flex flex-col gap-5">
           <div className="flex flex-col gap-1.5">
             <span className="text-[13px] text-ink-muted">In escrow</span>
             <div className="flex items-baseline gap-2.5">
-              <span className="font-display font-semibold text-[44px] leading-[1.05] tabular tracking-tight" data-testid="escrow">{fmt(shownBalance)}</span>
+              {state ? <span className="font-display font-semibold text-[44px] leading-[1.05] tabular tracking-tight" data-testid="escrow">{fmt(shownBalance)}</span>
+                : <span className="sk inline-block w-40 h-11 rounded-md" aria-label="Escrow balance not loaded" />}
               <span className="text-sm text-ink-muted">tUSD</span>
             </div>
-            <span className="text-xl font-semibold tabular" data-testid="paid-count">{shownPaid} of {state?.total ?? 50} paid</span>
-            <span className="text-sm text-ink-muted">{released ? `Month ${latest?.month ?? demoMonth} released, ${state?.sites.reduce((a, s) => a + s.held, 0)} held.` : `Month ${demoMonth - 1} complete. The sampling window closes 30 s after the next submission on this demo.`}</span>
+            {state ? <span className="text-xl font-semibold tabular" data-testid="paid-count">{shownPaid} of {state.total} paid</span>
+              : <span className="sk inline-block w-32 h-6 rounded" aria-label="Paid count not loaded" />}
+            <span className="text-sm text-ink-muted">{!state ? "Waiting for the chain." : released ? `Month ${latest?.month ?? demoMonth} released, ${state.sites.reduce((a, s) => a + s.held, 0)} held.` : state.summaryMonth === 0 ? "No claims yet for this window. The first summaries arrive at month 1." : `Month ${demoMonth - 1} complete. The sampling window closes 30 s after the next submission on this demo.`}</span>
             {state && <span className="text-[13px] text-ink-muted" data-testid="programme" data-address={state.instance}>Programme contract {state.explorer
               ? <a className="font-mono text-ink" href={`${state.explorer}/address/${state.instance}`} target="_blank" rel="noreferrer">{short(state.instance)}</a>
               : <span className="font-mono text-ink">{short(state.instance)}</span>}</span>}
@@ -147,7 +161,7 @@ export function Tally({ initial, error, demoMonth, judgeCard }: Props) {
             {inProgress && !running && <p className="mt-2 text-[13px] text-ink-muted">Month {demoMonth}'s summaries are already in on this programme: someone else is running it. <a href="/" className="font-semibold text-ink">Open a fresh programme</a>.</p>}
             {runError && <p className="mt-2 text-sm text-danger">{runError}</p>}
             {preparing && <p className="mt-2 text-[13px] text-ink-muted" role="status">{preparing}</p>}
-            {state?.fresh && state.lastReleased && !running && <p className="mt-2 text-[13px] text-ink-muted">A previous visitor ran this demo on another programme. <a href={`/?programme=${state.lastReleased}`} className="font-semibold text-ink">See that release</a>.</p>}
+            {!record && !preview && state?.fresh && state.lastReleased && !running && <p className="mt-2 text-[13px] text-ink-muted">A previous visitor ran this demo on another programme. <a href={`/?programme=${state.lastReleased}`} className="font-semibold text-ink">See that release</a>.</p>}
           </div>
           {judgeCard && (
             <section aria-label="How to judge this in 90 seconds" className="bg-surface-1 border border-line rounded-lg px-4 py-4 text-sm flex flex-col gap-2">
@@ -204,7 +218,7 @@ export function Tally({ initial, error, demoMonth, judgeCard }: Props) {
 
       <section aria-label="Releases" className="flex flex-col gap-2.5" data-testid="releases">
         {state?.releases.map((r) => (
-          <div key={r.txHash} className="flex items-center gap-5 flex-wrap bg-surface-1 rounded-lg px-5 py-3.5 shadow-[var(--shadow-raised)]" data-testid="receipt">
+          <div key={r.txHash} className="receipt flex items-center gap-5 flex-wrap bg-surface-1 rounded-lg px-5 py-3.5 shadow-[var(--shadow-raised)]" data-testid="receipt">
             <span className="flex items-center gap-2.5 font-semibold"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" stroke="var(--accent-strong)" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" fill="none" /></svg>Release, month {r.month}</span>
             <span className="tabular">{r.count} connections</span>
             <span className="tabular">{fmt(r.totalTusd)} tUSD</span>
@@ -216,6 +230,8 @@ export function Tally({ initial, error, demoMonth, judgeCard }: Props) {
           </div>
         ))}
         {(running || events.length > 0) && (
+          <details open className="text-sm group">
+          <summary className="cursor-pointer text-ink-muted list-none flex items-center gap-2 mb-1.5"><span aria-hidden="true" className="inline-block transition-transform group-open:rotate-90">›</span>{running ? "Run steps" : `${STEP_NAMES.length} steps${runStartedAt && runEndedAt ? `, ${Math.round((runEndedAt - runStartedAt) / 1000)} s` : ""}`}</summary>
           <ol className="flex flex-col gap-1.5 text-sm" aria-label="Run steps" data-testid="steps">
             {STEP_NAMES.map((name, i) => {
               const ev = current(i + 1);
@@ -232,6 +248,7 @@ export function Tally({ initial, error, demoMonth, judgeCard }: Props) {
               );
             })}
           </ol>
+          </details>
         )}
         {!state?.releases.length && !running && events.length === 0 && (
           <p className="text-sm text-ink-muted px-5 py-3.5 bg-surface-sunken rounded-lg m-0">No release yet in this window. Month {demoMonth} is the first month in which the rule and the sampling window can both be met.</p>

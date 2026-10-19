@@ -370,7 +370,8 @@
         "web/src/components/**",
         "web/src/app/globals.css",
         "web/src/lib/demo-flags.ts",
-        "web/e2e/**"
+        "web/e2e/**",
+        "web/src/lib/preview.ts"
       ],
       "acceptance": [
         "AC-9",
@@ -382,8 +383,16 @@
         "cd web && npm run typecheck"
       ],
       "rollback": "git revert",
-      "status": "todo",
-      "notes": ""
+      "status": "done",
+      "notes": "NumberFlow dropped: the figures already count down one grant at a time in step with the lighting cells, which is the moving number the spec asked for; one fewer dependency. ?state= previews carry an on-screen preview banner.",
+      "base": "dd56357",
+      "started_after": 40,
+      "evidence": [
+        "E0046",
+        "E0047",
+        "E0048",
+        "E0049"
+      ]
     },
     {
       "id": "T09",

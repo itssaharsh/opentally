@@ -51,3 +51,6 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .cell[data-state="paid"] { background: var(--accent); }
 .cell:hover { outline: 2px solid var(--ink); outline-offset: 1px; }
 @media (max-width: 640px) { .cell { width: 24px; height: 24px; } }
+.receipt { transition: opacity 280ms var(--ease-enter), translate 280ms var(--ease-enter); }
+@starting-style { .receipt { opacity: 0; translate: 0 8px; } }
+@media (prefers-reduced-motion: reduce) { .receipt { transition: opacity 150ms ease; } @starting-style { .receipt { translate: 0 0; } } }
