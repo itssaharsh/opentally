@@ -2,7 +2,7 @@
   "project": "opentally",
   "mode": "hackathon",
   "channel": "direct",
-  "base": null,
+  "base": "7f16b53",
   "created": "2026-10-19",
   "parallel": false,
   "suite": [
@@ -71,8 +71,16 @@
         "cd web && npm run build"
       ],
       "rollback": "delete the folders; nothing is deployed",
-      "status": "todo",
-      "notes": ""
+      "status": "done",
+      "notes": "",
+      "base": "7f16b53",
+      "started_after": 0,
+      "evidence": [
+        "E0001",
+        "E0002",
+        "E0003",
+        "E0004"
+      ]
     },
     {
       "id": "T02",
@@ -428,7 +436,7 @@
     {
       "id": "T14",
       "title": "Final take from the frozen build",
-      "objective": "the 3-minute video recorded from the deployed URL with ?record=1&judge=0, following contract \u00a711",
+      "objective": "the 3-minute video recorded from the deployed URL with ?record=1&judge=0, following contract §11",
       "role": "product-engineer",
       "size": "S",
       "kind": "record",
@@ -438,7 +446,7 @@
       "writes": [],
       "suite": false,
       "acceptance": [
-        "WHEN the take is reviewed THE SYSTEM SHALL run at most 180 s and show every beat of \u00a711"
+        "WHEN the take is reviewed THE SYSTEM SHALL run at most 180 s and show every beat of §11"
       ],
       "verify": [
         "observe: final take recorded and under 180 s"
