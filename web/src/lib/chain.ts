@@ -1,7 +1,7 @@
 import "server-only";
 import { createPublicClient, http, type Address, type Hex, type PublicClient } from "viem";
 import { sepolia, hardhat } from "viem/chains";
-import { openTallyAbi } from "./abi";
+import { openTallyAbi, openTallyFactoryAbi } from "./abi";
 import deploymentJson from "../data/deployment.json";
 import { shapeState, type TallyState, type ReleaseView } from "./state";
 
@@ -20,14 +20,30 @@ export function publicClient(): PublicClient {
   return _client;
 }
 
-export function instanceAddress(): Address {
-  return (process.env.INSTANCE_ADDRESS ?? deployment.instance) as Address;
+/// The active programme instance: the factory's latest, found through its Created events so a reset needs no redeploy.
+let _instance: { address: Address; fromBlock: bigint; at: number } | null = null;
+export function invalidateInstance() { _instance = null; }
+export async function currentInstance(): Promise<{ address: Address; fromBlock: bigint }> {
+  if (process.env.INSTANCE_ADDRESS) return { address: process.env.INSTANCE_ADDRESS as Address, fromBlock: BigInt(deployment.deployBlock) };
+  if (_instance && Date.now() - _instance.at < 10_000) return _instance;
+  const client = publicClient();
+  try {
+    const logs = await client.getContractEvents({ address: deployment.factory as Address, abi: openTallyFactoryAbi, eventName: "Created", fromBlock: BigInt(Math.max(0, deployment.deployBlock - 1)), strict: true });
+    if (logs.length) {
+      const last = logs[logs.length - 1];
+      _instance = { address: last.args.instance as Address, fromBlock: last.blockNumber as bigint, at: Date.now() };
+      return _instance;
+    }
+  } catch { /* fall through to the deployment file */ }
+  _instance = { address: deployment.instance as Address, fromBlock: BigInt(deployment.deployBlock), at: Date.now() };
+  return _instance;
 }
+export async function instanceAddress(): Promise<Address> { return (await currentInstance()).address; }
 
 export const DEMO_MONTH = 4;
 
-export async function readReleases(client: PublicClient, address: Address): Promise<ReleaseView[]> {
-  const logs = await client.getContractEvents({ address, abi: openTallyAbi, eventName: "ReleaseBatch", fromBlock: BigInt(deployment.deployBlock), strict: true });
+export async function readReleases(client: PublicClient, address: Address, fromBlock: bigint): Promise<ReleaseView[]> {
+  const logs = await client.getContractEvents({ address, abi: openTallyAbi, eventName: "ReleaseBatch", fromBlock, strict: true });
   const out: ReleaseView[] = [];
   for (const l of logs) {
     const receipt = await client.getTransactionReceipt({ hash: l.transactionHash as Hex }).catch(() => null);
@@ -38,7 +54,7 @@ export async function readReleases(client: PublicClient, address: Address): Prom
 
 export async function readState(month = DEMO_MONTH): Promise<TallyState> {
   const client = publicClient();
-  const address = instanceAddress();
+  const { address, fromBlock } = await currentInstance();
   const c = { address, abi: openTallyAbi } as const;
   const [programmeName, escrow, paidCount, paidTotal, rule, siteCount, connectionCount, batchAt, block] = await Promise.all([
     client.readContract({ ...c, functionName: "programmeName" }),
@@ -55,7 +71,7 @@ export async function readState(month = DEMO_MONTH): Promise<TallyState> {
   const sites = await Promise.all(Array.from({ length: Number(siteCount) }, (_, i) => client.readContract({ ...c, functionName: "getSite", args: [i] })));
   const connections = await Promise.all(Array.from({ length: n }, (_, i) => client.readContract({ ...c, functionName: "getConnection", args: [i] })));
   const summaries = await Promise.all(Array.from({ length: n }, (_, i) => client.readContract({ ...c, functionName: "getSummary", args: [month, i] })));
-  const releases = await readReleases(client, address);
+  const releases = await readReleases(client, address, fromBlock);
   const [activeDaysMin, kwhMilliMin, windowSeconds] = rule as unknown as [number, number, number];
   return shapeState({
     instance: address, programmeName: programmeName as string, chainId: deployment.chainId, explorer: deployment.explorer,

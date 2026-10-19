@@ -194,8 +194,18 @@
         "cd web && npm run e2e:pipeline"
       ],
       "rollback": "git revert; local chain only",
-      "status": "todo",
-      "notes": ""
+      "status": "done",
+      "notes": "",
+      "base": "bcdfd8c",
+      "started_after": 11,
+      "evidence": [
+        "E0012",
+        "E0013",
+        "E0014",
+        "E0015",
+        "E0016",
+        "E0017"
+      ]
     },
     {
       "id": "T05",

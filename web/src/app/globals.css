@@ -1,26 +1,53 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: light;
+  --ff-display: var(--font-display), Georgia, serif;
+  --ff-body: var(--font-body), system-ui, sans-serif;
+  --ff-mono: var(--font-mono), ui-monospace, monospace;
+  --canvas: #FBFAF6; --surface-1: #FFFFFF; --surface-2: #EEECE4;
+  --surface-sunken: color-mix(in oklch, var(--canvas), black 4%);
+  --line: #D9D6CC; --line-input: #7E7B70;
+  --ink: #141B2B; --ink-muted: #5B6070;
+  --accent: #1F9D55; --accent-strong: #177A43; --accent-ink: #FFFFFF;
+  --accent-hover: oklch(from var(--accent-strong) calc(l - .06) c h);
+  --accent-press: oklch(from var(--accent-strong) calc(l - .12) c h);
+  --accent-container: color-mix(in oklch, var(--accent) 14%, var(--surface-1));
+  --focus: var(--ink);
+  --success: var(--accent); --warning: #8A5A00; --danger: #B3341F;
+  --danger-container: color-mix(in oklch, var(--danger) 10%, var(--surface-1));
+  --r-sm: 3px; --r-md: 6px; --r-lg: 10px;
+  --shadow-raised: 0 1px 2px rgb(20 27 43 / .08), 0 2px 6px -1px rgb(20 27 43 / .08);
+  --shadow-overlay: 0 4px 8px rgb(20 27 43 / .06), 0 16px 40px -8px rgb(20 27 43 / .22);
+  --ease-out: cubic-bezier(.23, 1, .32, 1); --ease-in-out: cubic-bezier(.77, 0, .175, 1); --ease-drawer: cubic-bezier(.32, .72, 0, 1);
+  --ease-enter: cubic-bezier(.05, .7, .1, 1); --ease-exit: cubic-bezier(.3, 0, .8, .15);
+  --dur-press: 120ms; --dur-hover: 150ms; --dur-pop: 200ms; --dur-modal: 280ms; --dur-exit: 150ms; --dur-drawer: 240ms;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-canvas: var(--canvas); --color-surface-1: var(--surface-1); --color-surface-2: var(--surface-2); --color-surface-sunken: var(--surface-sunken);
+  --color-line: var(--line); --color-line-input: var(--line-input); --color-ink: var(--ink); --color-ink-muted: var(--ink-muted);
+  --color-accent: var(--accent); --color-accent-strong: var(--accent-strong); --color-accent-ink: var(--accent-ink); --color-accent-container: var(--accent-container);
+  --color-success: var(--success); --color-warning: var(--warning); --color-danger: var(--danger); --color-danger-container: var(--danger-container);
+  --font-display: var(--ff-display); --font-sans: var(--ff-body); --font-mono: var(--ff-mono);
+  --radius-sm: var(--r-sm); --radius-md: var(--r-md); --radius-lg: var(--r-lg);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-}
+html { background: var(--canvas); }
+body { margin: 0; background: var(--canvas); color: var(--ink); font-family: var(--ff-body); font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+h1, h2, h3 { text-wrap: balance; margin: 0; }
+p { text-wrap: pretty; }
+[hidden] { display: none !important; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+button, a { -webkit-tap-highlight-color: transparent; }
+.tabular { font-variant-numeric: tabular-nums; }
+.sk { background: linear-gradient(90deg, var(--surface-2), var(--surface-1), var(--surface-2)) 0 0 / 200% 100%; animation: sk 1.5s linear infinite; }
+@keyframes sk { to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .sk { animation: none; } .cell { transition: none !important; } }
+.cell { width: 28px; height: 28px; border-radius: var(--r-sm); box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; transition: background-color 180ms var(--ease-out), border-color 180ms var(--ease-out); text-decoration: none; color: var(--ink); }
+.cell[data-state="pending"] { border: 1px solid var(--line-input); background: transparent; }
+.cell[data-state="eligible"] { background: var(--surface-2); }
+.cell[data-state="held"] { background: var(--surface-2); background-image: repeating-linear-gradient(135deg, rgb(20 27 43 / .18) 0 2px, transparent 2px 6px); font-size: 12px; font-weight: 700; }
+.cell[data-state="paid"] { background: var(--accent); }
+.cell:hover { outline: 2px solid var(--ink); outline-offset: 1px; }
+@media (max-width: 640px) { .cell { width: 24px; height: 24px; } }

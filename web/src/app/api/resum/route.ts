@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { openTallyAbi } from "@/lib/abi";
-import { publicClient, instanceAddress, deployment } from "@/lib/chain";
+import { publicClient, currentInstance } from "@/lib/chain";
 import { resum, toCsv, type ReleasedRecord } from "@/lib/resum";
 
 export const runtime = "nodejs";
@@ -10,9 +10,9 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
   const format = url.searchParams.get("format") ?? "json";
   const pc = publicClient();
-  const address = instanceAddress();
+  const { address, fromBlock } = await currentInstance();
   try {
-    const logs = await pc.getContractEvents({ address, abi: openTallyAbi, eventName: "Released", fromBlock: BigInt(deployment.deployBlock), strict: true });
+    const logs = await pc.getContractEvents({ address, abi: openTallyAbi, eventName: "Released", fromBlock, strict: true });
     const records: ReleasedRecord[] = logs.map((l) => ({
       connectionId: Number(l.args.connectionId), month: Number(l.args.month), siteId: Number(l.args.siteId),
       amountTusd: Number(l.args.amount) / 1e6, txHash: l.transactionHash as string, blockNumber: Number(l.blockNumber),

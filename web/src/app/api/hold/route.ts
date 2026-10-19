@@ -17,7 +17,7 @@ export async function POST(req: Request) {
   if (body.action === "keep") return NextResponse.json({ ok: true, action: "keep", id: body.id });
   const chain = deployment.chainId === 11155111 ? sepolia : { ...hardhat, id: deployment.chainId };
   const verifier = createWalletClient({ account: roleAccount(ROLE.verifier), chain, transport: http(rpcUrl(), { timeout: 60_000 }) });
-  const address = instanceAddress();
+  const address = await instanceAddress();
   try {
     const hash = body.action === "lift"
       ? await verifier.writeContract({ address, abi: openTallyAbi, functionName: "lift", args: [body.id] })

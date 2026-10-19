@@ -44,7 +44,7 @@ const connections = (programme as unknown as { connections: Conn[] }).connection
 
 export async function* runMonth(month = DEMO_MONTH, opts: { wrongKeyDemo?: boolean } = { wrongKeyDemo: true }): AsyncGenerator<StepEvent> {
   const pc = publicClient();
-  const address = instanceAddress();
+  const address = await instanceAddress();
   const chainId = await pc.getChainId();
   const owner = wallet(ROLE.owner);
   const verifier = wallet(ROLE.verifier);

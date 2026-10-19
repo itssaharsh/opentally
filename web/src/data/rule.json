@@ -1,0 +1,15 @@
+{
+  "sentence": {
+    "before": "Connections are released once meters have been active for",
+    "between1": "and consumption has met",
+    "between2": "after the",
+    "after": "sampling window closes without a hold."
+  },
+  "parameters": [
+    { "key": "activeDays", "label": "active for 30 days or more", "value": 30, "unit": "days", "source": "DARES IVA terms of reference: 'meters have been successfully active'", "chosen": false },
+    { "key": "kwhMin", "label": "2.0 kWh or more", "value": 2.0, "unit": "kWh per month", "source": "DARES IVA terms of reference: 'minimum consumption/capacity utilization threshold at an aggregate level' (the terms name the threshold without a value)", "chosen": true },
+    { "key": "window", "label": "14-day sampling window", "value": 14, "unit": "days", "source": "DARES IVA terms of reference: phone and site sampling before claims are confirmed; 30 seconds on this demo instance", "chosen": false, "demoValue": "30 s" }
+  ],
+  "source": { "name": "DARES Independent Verification Agent terms of reference (Rural Electrification Agency of Nigeria)", "url": "https://nep.rea.gov.ng/assets/documents/resource-hub/ToR_for_IVA_North.pdf", "read": "2026-10-19" },
+  "grant": { "tusd": 350, "source": "Nigeria Electrification Project: US$350 per connection after 90 days of service (Rockefeller Foundation case study, 2020); the Universal Energy Facility pays US$592" }
+}

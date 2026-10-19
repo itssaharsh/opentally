@@ -9,7 +9,7 @@ export const maxDuration = 180;
 export async function POST(req: Request) {
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "local";
   if (!allow(`run:${ip}`, 3, 10 * 60_000)) return new Response("Too many runs from this address; try again in a few minutes.", { status: 429 });
-  const instance = instanceAddress();
+  const instance = await instanceAddress();
   if (!acquireRun(instance)) return new Response("A release is already running on this programme; wait for it to finish.", { status: 429 });
   const url = new URL(req.url);
   const month = Number(url.searchParams.get("month") ?? 4);

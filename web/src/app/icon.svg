@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" role="img"><title>OpenTally</title>
+<style>.i{stroke:#141B2B}@media (prefers-color-scheme:dark){.i{stroke:#F3F1EA}}</style>
+<path class="i" d="M8 10v28M16 10v28M24 10v28M32 10v28" stroke-width="5" stroke-linecap="round" fill="none"/>
+<path d="M4 36L40 12" stroke="#1F9D55" stroke-width="5" stroke-linecap="round" fill="none"/>
+</svg>
