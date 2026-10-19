@@ -109,8 +109,14 @@
         "cd contracts && npx hardhat test"
       ],
       "rollback": "git revert the T02 commit; nothing deployed",
-      "status": "todo",
-      "notes": ""
+      "status": "done",
+      "notes": "",
+      "base": "6eeb25f",
+      "started_after": 4,
+      "evidence": [
+        "E0006",
+        "E0007"
+      ]
     },
     {
       "id": "T03",
