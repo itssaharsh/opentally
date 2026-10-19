@@ -70,13 +70,14 @@ export async function readState(month = DEMO_MONTH): Promise<TallyState> {
   const n = Number(connectionCount);
   const sites = await Promise.all(Array.from({ length: Number(siteCount) }, (_, i) => client.readContract({ ...c, functionName: "getSite", args: [i] })));
   const connections = await Promise.all(Array.from({ length: n }, (_, i) => client.readContract({ ...c, functionName: "getConnection", args: [i] })));
-  const summaries = await Promise.all(Array.from({ length: n }, (_, i) => client.readContract({ ...c, functionName: "getSummary", args: [month, i] })));
+  const summaryMonth = (batchAt as bigint) === 0n && month > 1 ? month - 1 : month;
+  const summaries = await Promise.all(Array.from({ length: n }, (_, i) => client.readContract({ ...c, functionName: "getSummary", args: [summaryMonth, i] })));
   const releases = await readReleases(client, address, fromBlock);
   const [activeDaysMin, kwhMilliMin, windowSeconds] = rule as unknown as [number, number, number];
   return shapeState({
     instance: address, programmeName: programmeName as string, chainId: deployment.chainId, explorer: deployment.explorer,
     escrow: escrow as bigint, paidCount: Number(paidCount), paidTotal: paidTotal as bigint, month, batchSubmittedAt: batchAt as bigint,
-    windowSeconds: Number(windowSeconds), nowTs: Number(block.timestamp),
+    windowSeconds: Number(windowSeconds), nowTs: Number(block.timestamp), summaryMonth,
     rule: { activeDaysMin: Number(activeDaysMin), kwhMilliMin: Number(kwhMilliMin), windowSeconds: Number(windowSeconds) },
     sites: sites.map((s) => ({ name: s.name, payout: s.payout, gateway: s.gateway, connectionCount: Number(s.connectionCount) })),
     connections: connections.map((x) => ({ siteId: Number(x.siteId), paid: x.paid, held: x.held, holdReason: Number(x.holdReason), paidMonth: Number(x.paidMonth), commissionedAt: x.commissionedAt })),

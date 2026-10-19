@@ -2,6 +2,7 @@
 // a product would move this to a shared store.
 const buckets = new Map<string, number[]>();
 export function allow(key: string, limit: number, windowMs: number, now = Date.now()) {
+  if (process.env.DEMO_LIMITS === "off") return true;
   const arr = (buckets.get(key) ?? []).filter((t) => now - t < windowMs);
   if (arr.length >= limit) { buckets.set(key, arr); return false; }
   arr.push(now); buckets.set(key, arr); return true;
@@ -10,6 +11,7 @@ export function resetLimiter() { buckets.clear(); }
 
 let runLock: { since: number; instance: string } | null = null;
 export function acquireRun(instance: string, now = Date.now(), ttlMs = 180_000) {
+  if (process.env.DEMO_LIMITS === "off") return true;
   if (runLock && now - runLock.since < ttlMs && runLock.instance === instance) return false;
   runLock = { since: now, instance };
   return true;

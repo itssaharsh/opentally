@@ -126,7 +126,7 @@ export function Tally({ initial, error, demoMonth, judgeCard }: Props) {
             <div key={s.index} className="flex flex-col gap-2">
               <div className="flex items-baseline gap-3">
                 <span className="text-[13px] font-semibold">{s.name}, {s.count} connections</span>
-                <span className="text-[13px] text-ink-muted tabular">{s.paid ? `${s.paid} paid` : `${s.eligible} eligible`}{s.held ? `, ${s.held} held` : ""}</span>
+                <span className="text-[13px] text-ink-muted tabular">{s.paid ? `${s.paid} paid` : state.summaryMonth < state.month ? `${s.eligible} met the rule in month ${state.summaryMonth}` : `${s.eligible} eligible`}{s.held ? `, ${s.held} held` : ""}</span>
               </div>
               <div className={`flex flex-wrap gap-1.5 max-w-[334px] ${running && (current(1)?.status === "running" || current(2)?.status === "running") ? "sk rounded" : ""}`}>
                 {s.connections.map((c) => {
@@ -142,7 +142,7 @@ export function Tally({ initial, error, demoMonth, judgeCard }: Props) {
               </div>
             </div>
           ))}
-          <p className="text-[13px] text-ink-muted">50 synthetic connections across 3 fictional sites, in a demo window modelled on the NEP and DARES rules. Green with a check is paid; hatched H is held by the screen for the verifier; grey is eligible under the rule.</p>
+          <p className="text-[13px] text-ink-muted">50 synthetic connections across 3 fictional sites, in a demo window modelled on the NEP and DARES rules. Green with a check is paid; hatched H is held by the screen for the verifier; grey met the rule {state && state.summaryMonth < state.month ? `in month ${state.summaryMonth}; month ${state.month}'s summaries arrive when the release runs` : "this month and waits for the release"}.</p>
         </section>
       </div>
 

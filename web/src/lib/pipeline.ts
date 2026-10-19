@@ -61,6 +61,7 @@ export async function* runMonth(month = DEMO_MONTH, opts: { wrongKeyDemo?: boole
     });
     const sigs: Hex[] = [];
     for (const cn of connections) sigs.push(await sign(items[cn.id], cn.siteIndex));
+    let rejectNote = "";
     if (opts.wrongKeyDemo) {
       // The security moment: one summary signed with another site's key. The contract refuses the whole batch.
       const victim = connections.find((x) => x.code === "C-B14")!;
@@ -71,12 +72,13 @@ export async function* runMonth(month = DEMO_MONTH, opts: { wrongKeyDemo?: boole
         yield { step: 1, name: STEP_NAMES[0], status: "running", detail: "unexpected: a wrong-key batch was accepted in simulation", at: now() };
       } catch (e) {
         const r = revertName(e);
-        yield { step: 1, name: STEP_NAMES[0], status: "running", detail: `1 summary rejected by the contract: ${victim.code} was signed with site C's key (${r?.name ?? "reverted"}); re-signed with site B's key and resubmitted`, at: now() };
+        rejectNote = `1 summary rejected by the contract first: ${victim.code} was signed with site C's key (${r?.name ?? "reverted"}), then re-signed with site B's key`;
+        yield { step: 1, name: STEP_NAMES[0], status: "running", detail: rejectNote, at: now() };
       }
     }
     const hash = await owner.writeContract({ ...c, functionName: "submitSummaries", args: [month, items, sigs] });
     const receipt = await pc.waitForTransactionReceipt({ hash });
-    yield { step: 1, name: STEP_NAMES[0], status: "done", count: items.length, txHash: hash, gasUsed: Number(receipt.gasUsed), detail: `${items.length} of ${items.length} verified on-chain`, at: now() };
+    yield { step: 1, name: STEP_NAMES[0], status: "done", count: items.length, txHash: hash, gasUsed: Number(receipt.gasUsed), detail: `${items.length} of ${items.length} verified on-chain${rejectNote ? "; " + rejectNote : ""}`, at: now() };
   } else {
     yield { step: 1, name: STEP_NAMES[0], status: "done", count: connections.length, detail: "already submitted earlier; verified on-chain", at: now() };
   }

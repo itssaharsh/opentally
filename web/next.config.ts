@@ -1,9 +1,9 @@
 import type { NextConfig } from "next";
 
+// cacheComponents is off: every page and route here reads live chain state per request, so the routes declare
+// `dynamic = "force-dynamic"` and run on the Node runtime.
 const nextConfig: NextConfig = {
-  /* config options here */
-  cacheComponents: true,
-  partialPrefetching: true,
+  poweredByHeader: false,
   turbopack: {
     rules: {
       "*.css": {

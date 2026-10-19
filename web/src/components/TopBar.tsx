@@ -12,7 +12,7 @@ export function TopBar({ network }: { network: string }) {
       <span className="flex-1" />
       <Link href="/rule" className="text-sm px-2.5 py-2 rounded-md hover:bg-surface-2">Rule</Link>
       <Link href="/about" className="text-sm px-2.5 py-2 rounded-md hover:bg-surface-2">About</Link>
-      <span className="text-[13px] font-semibold bg-surface-2 rounded-full px-3 py-1">{network}</span>
+      <span className="text-[13px] font-semibold bg-surface-2 rounded-full px-3 py-1 whitespace-nowrap"><span className="sm:hidden">{network.split(" ")[0]}</span><span className="hidden sm:inline">{network}</span></span>
     </header>
   );
 }

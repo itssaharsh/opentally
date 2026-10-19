@@ -18,6 +18,8 @@ export type TallyState = {
   instance: string; programmeName: string; chainId: number; explorer: string | null;
   escrowTusd: number; paidCount: number; paidTotalTusd: number; total: number;
   month: number; batchSubmittedAt: number; windowClosesAt: number; windowSeconds: number; nowTs: number;
+  /** The month whose summaries the connection states reflect: the release month once its batch is in, else the month before. */
+  summaryMonth: number;
   rule: { activeDaysMin: number; kwhMin: number; windowSeconds: number };
   sites: SiteView[]; releases: ReleaseView[]; syncedAt: string;
 };
@@ -37,6 +39,7 @@ export function codeFor(siteIndex: number, ordinal: number, siteCodes = ["A", "B
 export function shapeState(input: {
   instance: string; programmeName: string; chainId: number; explorer: string | null;
   escrow: bigint; paidCount: number; paidTotal: bigint; month: number; batchSubmittedAt: bigint; windowSeconds: number; nowTs: number;
+  summaryMonth?: number;
   rule: { activeDaysMin: number; kwhMilliMin: number; windowSeconds: number };
   sites: RawSite[]; connections: RawConnection[]; summaries: (RawSummary | null)[]; releases: ReleaseView[];
 }): TallyState {
@@ -65,6 +68,7 @@ export function shapeState(input: {
     instance: input.instance, programmeName: input.programmeName, chainId: input.chainId, explorer: input.explorer,
     escrowTusd: Number(input.escrow) / 1e6, paidCount: input.paidCount, paidTotalTusd: Number(input.paidTotal) / 1e6, total: views.length,
     month: input.month, batchSubmittedAt: batchAt, windowClosesAt: batchAt ? batchAt + input.windowSeconds : 0, windowSeconds: input.windowSeconds, nowTs: input.nowTs,
+    summaryMonth: input.summaryMonth ?? input.month,
     rule: { activeDaysMin: input.rule.activeDaysMin, kwhMin: input.rule.kwhMilliMin / 1000, windowSeconds: input.rule.windowSeconds },
     sites, releases: input.releases, syncedAt: new Date(input.nowTs * 1000).toISOString(),
   };

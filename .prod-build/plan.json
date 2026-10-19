@@ -223,7 +223,15 @@
         "web/src/components/**",
         "web/src/app/icon.svg",
         "web/e2e/**",
-        "web/playwright.config.ts"
+        "web/playwright.config.ts",
+        "web/src/lib/chain.ts",
+        "web/src/lib/state.ts",
+        "web/src/lib/pipeline.ts",
+        "web/src/lib/limiter.ts",
+        "web/test/**",
+        "web/next.config.ts",
+        "web/package.json",
+        "web/package-lock.json"
       ],
       "acceptance": [
         "AC-7",
@@ -233,8 +241,15 @@
         "cd web && npm run e2e -- run.spec"
       ],
       "rollback": "git revert",
-      "status": "todo",
-      "notes": ""
+      "status": "done",
+      "notes": "Plan changed 2026-10-19: also touched the chain reader and state shaping (the first screen showed month 4 as pending before its summaries existed; it now shows month 3), the pipeline (step 1 kept the wrong-key note only while running), the limiter (DEMO_LIMITS=off for tests) and next.config.ts (cacheComponents off: it forbids route runtime and dynamic exports).",
+      "base": "981cfb4",
+      "started_after": 17,
+      "evidence": [
+        "E0021",
+        "E0022",
+        "E0023"
+      ]
     },
     {
       "id": "T06",

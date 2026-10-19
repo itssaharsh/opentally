@@ -36,3 +36,16 @@ describe("shapeState", () => {
     expect(s.windowClosesAt).toBe(0);
   });
 });
+
+describe("shapeState before the month's batch", () => {
+  it("reports which month the states reflect", () => {
+    const s = shapeState({ instance: "0x1", programmeName: "Demo", chainId: 31337, explorer: null, escrow: 0n, paidCount: 0, paidTotal: 0n,
+      month: 4, batchSubmittedAt: 0n, windowSeconds: 30, nowTs: 0, summaryMonth: 3,
+      rule: { activeDaysMin: 30, kwhMilliMin: 2000, windowSeconds: 30 },
+      sites: [{ name: "Site A, Kano", payout: "0xa", gateway: "0xga", connectionCount: 1 }],
+      connections: [{ siteId: 0, paid: false, held: false, holdReason: 0, paidMonth: 0, commissionedAt: 1n }],
+      summaries: [{ exists: true, activeDays: 30, kwhMilli: 60000, traceHash: "0x00" }], releases: [] });
+    expect(s.summaryMonth).toBe(3);
+    expect(s.sites[0].connections[0].state).toBe("eligible");
+  });
+});
