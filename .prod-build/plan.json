@@ -1,0 +1,477 @@
+{
+  "project": "opentally",
+  "mode": "hackathon",
+  "channel": "direct",
+  "base": null,
+  "created": "2026-10-19",
+  "parallel": false,
+  "suite": [
+    "cd contracts && npx hardhat test",
+    "cd web && npm run typecheck && npm test"
+  ],
+  "milestones": [
+    {
+      "id": "M1",
+      "goal": "J1 end to end on a local chain: seed, run month 4 release, 47 paid and 3 held on S1; backup take recorded",
+      "tasks": [
+        "T01",
+        "T02",
+        "T03",
+        "T04",
+        "T05",
+        "T06"
+      ]
+    },
+    {
+      "id": "M2",
+      "goal": "Live on Sepolia and Vercel; S1 to the UI spec; S2, S3, S4 and re-sum; security moment",
+      "tasks": [
+        "T07",
+        "T08",
+        "T09",
+        "T10",
+        "T11"
+      ]
+    },
+    {
+      "id": "M3",
+      "goal": "Deliverables, QA on the judged path, final take, submission",
+      "tasks": [
+        "T12",
+        "T13",
+        "T14",
+        "T15"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "T01",
+      "title": "Scaffold the two packages and make the first commit",
+      "objective": "contracts/ (Hardhat 3, viem toolbox, OpenZeppelin) and web/ (Next.js 16, Tailwind 4) compile and run; root README states the first-commit sentence; first commit after the window start",
+      "role": "product-engineer",
+      "size": "S",
+      "deps": [],
+      "writes": [
+        "contracts/package.json",
+        "contracts/package-lock.json",
+        "contracts/hardhat.config.ts",
+        "contracts/tsconfig.json",
+        "web/**",
+        "package.json",
+        "README.md",
+        ".gitignore"
+      ],
+      "acceptance": [
+        "WHEN `npx hardhat compile` runs in contracts THE SYSTEM SHALL compile an empty project without error",
+        "WHEN `npm run build` runs in web THE SYSTEM SHALL build the scaffold"
+      ],
+      "verify": [
+        "cd contracts && npx hardhat compile",
+        "cd web && npm run build"
+      ],
+      "rollback": "delete the folders; nothing is deployed",
+      "status": "todo",
+      "notes": ""
+    },
+    {
+      "id": "T02",
+      "title": "OpenTally contracts with tests (RED first)",
+      "objective": "TestUSD, OpenTally (sites, connections, EIP-712 summaries, rule, holds, release, events) and OpenTallyFactory pass the acceptance tests",
+      "role": "product-engineer",
+      "size": "L",
+      "deps": [
+        "T01"
+      ],
+      "writes": [
+        "contracts/contracts/**",
+        "contracts/test/**",
+        "contracts/hardhat.config.ts"
+      ],
+      "produces": [
+        "contract:contracts/artifacts/contracts/OpenTally.sol/OpenTally.json#abi"
+      ],
+      "acceptance": [
+        "AC-1",
+        "AC-2",
+        "AC-3",
+        "AC-4"
+      ],
+      "verify": [
+        "cd contracts && npx hardhat test"
+      ],
+      "rollback": "git revert the T02 commit; nothing deployed",
+      "status": "todo",
+      "notes": ""
+    },
+    {
+      "id": "T03",
+      "title": "Seed generator, local deploy script and chain state API",
+      "objective": "a deterministic seed (3 sites, 50 connections, months 1 to 4, 3 planted faults) deploys and seeds an instance on the local Hardhat node; web reads it through /api/state",
+      "role": "product-engineer",
+      "size": "M",
+      "deps": [
+        "T02"
+      ],
+      "writes": [
+        "contracts/scripts/**",
+        "contracts/seed/**",
+        "web/src/lib/chain.ts",
+        "web/src/lib/abi.ts",
+        "web/src/data/**",
+        "web/src/app/api/state/**",
+        "web/package.json",
+        "web/package-lock.json",
+        "web/.env.example"
+      ],
+      "produces": [
+        "contract:web/src/lib/chain.ts#readState"
+      ],
+      "acceptance": [
+        "WHEN the seed runs against a fresh local node THE SYSTEM SHALL register 3 sites and 50 connections, deposit 17,500 tUSD and submit months 1 to 3",
+        "WHEN /api/state is called THE SYSTEM SHALL return the figures, sites, connections and holds read from the chain"
+      ],
+      "verify": [
+        "cd contracts && npm run seed:local:test",
+        "cd web && npm test -- state"
+      ],
+      "rollback": "git revert; local chain only",
+      "status": "todo",
+      "notes": ""
+    },
+    {
+      "id": "T04",
+      "title": "Run pipeline as a server-sent event stream, with the screen",
+      "objective": "POST /api/run signs month 4 summaries, submits them, screens traces (clone, flat, outlier) and holds through the verifier key, waits for the window, releases, streaming five named steps; a run lock and rate limit",
+      "role": "product-engineer",
+      "size": "L",
+      "deps": [
+        "T03"
+      ],
+      "writes": [
+        "web/src/lib/screen.ts",
+        "web/src/lib/pipeline.ts",
+        "web/src/lib/limiter.ts",
+        "web/src/app/api/run/**",
+        "web/src/app/api/hold/**",
+        "web/src/app/api/resum/**",
+        "web/test/**",
+        "web/vitest.config.ts"
+      ],
+      "acceptance": [
+        "AC-5",
+        "AC-6",
+        "AC-10",
+        "AC-14",
+        "WHEN /api/run is called on the seeded local instance THE SYSTEM SHALL stream five steps and end with a release of 47 connections and 3 holds"
+      ],
+      "verify": [
+        "cd web && npm test -- screen",
+        "cd web && npm test -- limiter",
+        "cd web && npm test -- resum",
+        "cd web && npm run e2e:pipeline"
+      ],
+      "rollback": "git revert; local chain only",
+      "status": "todo",
+      "notes": ""
+    },
+    {
+      "id": "T05",
+      "title": "S1 golden path, ugly is fine",
+      "objective": "the tally page shows the figures, the ledger, the button; pressing it streams the steps and ends with lit cells, the balance counting down and the receipt row; tokens and fonts from UI-SPEC",
+      "role": "frontend-engineer",
+      "size": "M",
+      "deps": [
+        "T04"
+      ],
+      "writes": [
+        "web/src/app/page.tsx",
+        "web/src/app/layout.tsx",
+        "web/src/app/globals.css",
+        "web/src/components/**",
+        "web/src/app/icon.svg",
+        "web/e2e/**",
+        "web/playwright.config.ts"
+      ],
+      "acceptance": [
+        "AC-7",
+        "AC-8"
+      ],
+      "verify": [
+        "cd web && npm run e2e -- run.spec"
+      ],
+      "rollback": "git revert",
+      "status": "todo",
+      "notes": ""
+    },
+    {
+      "id": "T06",
+      "title": "Backup take of J1 on the local build",
+      "objective": "a screen recording of the full demo script on the local chain, kept outside the repository, so a working take exists before Sepolia",
+      "role": "product-engineer",
+      "size": "S",
+      "kind": "record",
+      "deps": [
+        "T05"
+      ],
+      "writes": [],
+      "suite": false,
+      "acceptance": [
+        "WHEN the take is reviewed THE SYSTEM SHALL show the first screen, the five steps, the lit cells and the receipt within 3 minutes"
+      ],
+      "verify": [
+        "observe: backup take recorded at ../hackathon-idea/ieee-climatechain-2026/takes/backup-local.webm with the five steps and the receipt visible"
+      ],
+      "rollback": "n/a",
+      "status": "todo",
+      "notes": ""
+    },
+    {
+      "id": "T07",
+      "title": "Deploy to Sepolia and Vercel; verify source",
+      "objective": "token, factory and a seeded instance on Sepolia with verified source; the web app on Vercel reading them; deployment.json committed",
+      "role": "deploy-reliability-reviewer",
+      "size": "M",
+      "kind": "deploy",
+      "deps": [
+        "T05"
+      ],
+      "writes": [
+        "contracts/scripts/deploy-sepolia.ts",
+        "web/src/data/deployment.json",
+        "web/vercel.json",
+        "web/.env.example",
+        "README.md"
+      ],
+      "acceptance": [
+        "WHEN the deployed URL opens signed out THE SYSTEM SHALL show S1 with the figures read from Sepolia",
+        "WHEN the instance address is opened on the explorer THE SYSTEM SHALL show verified source"
+      ],
+      "verify": [
+        "python3 .prod-build/pb.py smoke $DEPLOY_URL --routes / /about /rule",
+        "observe: verified source on the Sepolia explorer for OpenTally, OpenTallyFactory and TestUSD"
+      ],
+      "rollback": "redeploy the previous Vercel deployment; a bad instance is replaced through the factory",
+      "status": "todo",
+      "notes": "blocked on Sepolia test ETH in the deployer wallet (A-4)"
+    },
+    {
+      "id": "T08",
+      "title": "S1 to the UI spec: tiers, states, motion, record mode",
+      "objective": "S1 matches the treatment table and the mockup: the payoff in site order, NumberFlow figures, the receipt row, the step list that collapses, the rule strip with the chosen token, the how-to-judge card, ?state= for first-run, running, released, partial, error; ?record=1; ?judge=0; Alt+Shift+R",
+      "role": "frontend-engineer",
+      "size": "L",
+      "deps": [
+        "T05"
+      ],
+      "writes": [
+        "web/src/app/page.tsx",
+        "web/src/components/**",
+        "web/src/app/globals.css",
+        "web/src/lib/demo-flags.ts",
+        "web/e2e/**"
+      ],
+      "acceptance": [
+        "AC-9",
+        "AC-13",
+        "WHEN ?state=error opens THE SYSTEM SHALL show the failed step with its reason and the Retry release button with every cell in its prior state"
+      ],
+      "verify": [
+        "cd web && npm run e2e -- states.spec",
+        "cd web && npm run typecheck"
+      ],
+      "rollback": "git revert",
+      "status": "todo",
+      "notes": ""
+    },
+    {
+      "id": "T09",
+      "title": "S2 connection view, S3 rule and keys, S4 about",
+      "objective": "S2 with the trace against the cohort, the hold reason, Lift hold and Keep hold through /api/hold; S3 with the quoted rule, parameters, key table and contract links; S4 with the copy block",
+      "role": "frontend-engineer",
+      "size": "M",
+      "deps": [
+        "T08"
+      ],
+      "writes": [
+        "web/src/app/connection/**",
+        "web/src/app/rule/**",
+        "web/src/app/about/**",
+        "web/src/components/**",
+        "web/src/data/rule.json",
+        "web/e2e/**"
+      ],
+      "acceptance": [
+        "AC-11",
+        "AC-12"
+      ],
+      "verify": [
+        "cd web && npm run e2e -- hold.spec",
+        "cd web && npm run typecheck"
+      ],
+      "rollback": "git revert",
+      "status": "todo",
+      "notes": ""
+    },
+    {
+      "id": "T10",
+      "title": "Re-sum drawer with downloads",
+      "objective": "the drawer rebuilds the paid count and amount from Released events, compares with the chain's counters, and downloads JSON and CSV",
+      "role": "frontend-engineer",
+      "size": "S",
+      "deps": [
+        "T08"
+      ],
+      "writes": [
+        "web/src/components/Resum*.tsx",
+        "web/src/app/api/resum/**",
+        "web/e2e/**"
+      ],
+      "acceptance": [
+        "AC-10"
+      ],
+      "verify": [
+        "cd web && npm run e2e -- resum.spec"
+      ],
+      "rollback": "git revert",
+      "status": "todo",
+      "notes": ""
+    },
+    {
+      "id": "T11",
+      "title": "Security gate and the wrong-key moment",
+      "objective": "step 1 of the run shows one summary rejected for the wrong site key and re-signed; secrets scan; rate limits verified; headers; the security document's threat model drafted from the code",
+      "role": "security-reviewer",
+      "size": "M",
+      "kind": "security",
+      "deps": [
+        "T09",
+        "T10"
+      ],
+      "writes": [
+        "web/src/lib/pipeline.ts",
+        "web/src/app/api/**",
+        "web/next.config.ts",
+        "docs/security-and-data-integrity.md",
+        "web/test/**"
+      ],
+      "acceptance": [
+        "AC-1 shown in the run",
+        "AC-14",
+        "WHEN the client bundle is searched THE SYSTEM SHALL contain no private key or RPC secret"
+      ],
+      "verify": [
+        "cd web && npm test -- limiter",
+        "cd web && npm run build && ! grep -rE '0x[0-9a-fA-F]{64}' .next/static",
+        "python3 .prod-build/pb.py rules check"
+      ],
+      "rollback": "git revert",
+      "status": "todo",
+      "notes": ""
+    },
+    {
+      "id": "T12",
+      "title": "The ten deliverables",
+      "objective": "README first screen; docs/: technical specification, architecture diagram (SVG), security and data integrity, problem statement (2 pages), climate impact with projections, adoption strategy, scalability roadmap, user testing; one PDF bundle for the form upload",
+      "role": "product-engineer",
+      "size": "L",
+      "kind": "docs",
+      "deps": [
+        "T11"
+      ],
+      "writes": [
+        "README.md",
+        "ARCHITECTURE.md",
+        "docs/**"
+      ],
+      "suite": false,
+      "acceptance": [
+        "AC-15"
+      ],
+      "verify": [
+        "python3 .prod-build/pb.py rules check",
+        "python3 .prod-build/pb.py submit check --description docs/devpost-description.md"
+      ],
+      "rollback": "git revert",
+      "status": "todo",
+      "notes": ""
+    },
+    {
+      "id": "T13",
+      "title": "QA on the judged path",
+      "objective": "foldcheck at both sizes on local and deployed; axe; keyboard path; the demo flow three times on the deployed URL with reset; one unseen input; the chain-off path; the stranger test on the first 140 characters",
+      "role": "test-engineer",
+      "size": "M",
+      "kind": "qa",
+      "deps": [
+        "T12",
+        "T07"
+      ],
+      "writes": [
+        "web/e2e/**",
+        "qa/**"
+      ],
+      "acceptance": [
+        "AC-7",
+        "AC-16",
+        "AC-13"
+      ],
+      "verify": [
+        "python3 /home/saharsh/.claude/plugins/synced/2aed9540-0336-45f7-a465-5b4a22af8e75_644037e8-d800-4f00-aeb2-b7ecb8482342/prod-ui~g2/skills/prod-ui/scripts/foldcheck.py $DEPLOY_URL --action \"text=Run month 4 release\" --result \"text=of 50 paid\" --promise tally --out qa/fold",
+        "observe: the demo flow ran three times in a row on the deployed URL with a reset between runs",
+        "observe: one unseen input and the chain-off path recorded"
+      ],
+      "rollback": "n/a",
+      "status": "todo",
+      "notes": ""
+    },
+    {
+      "id": "T14",
+      "title": "Final take from the frozen build",
+      "objective": "the 3-minute video recorded from the deployed URL with ?record=1&judge=0, following contract \u00a711",
+      "role": "product-engineer",
+      "size": "S",
+      "kind": "record",
+      "deps": [
+        "T13"
+      ],
+      "writes": [],
+      "suite": false,
+      "acceptance": [
+        "WHEN the take is reviewed THE SYSTEM SHALL run at most 180 s and show every beat of \u00a711"
+      ],
+      "verify": [
+        "observe: final take recorded and under 180 s"
+      ],
+      "rollback": "n/a",
+      "status": "todo",
+      "notes": ""
+    },
+    {
+      "id": "T15",
+      "title": "Submit",
+      "objective": "README first screen, the Devpost description and tagline, the form answers, the PDF upload, pb.py window and submit check --online, every link opened signed out, submitted with an hour in hand",
+      "role": "product-engineer",
+      "size": "S",
+      "kind": "submit",
+      "deps": [
+        "T14"
+      ],
+      "writes": [
+        "README.md",
+        "docs/devpost-description.md"
+      ],
+      "suite": false,
+      "acceptance": [
+        "WHEN submit check runs with --online THE SYSTEM SHALL report no FAIL"
+      ],
+      "verify": [
+        "python3 .prod-build/pb.py window",
+        "python3 .prod-build/pb.py submit check --description docs/devpost-description.md --live $DEPLOY_URL --video-url $VIDEO_URL --online"
+      ],
+      "rollback": "n/a",
+      "status": "todo",
+      "notes": ""
+    }
+  ]
+}

@@ -1,0 +1,110 @@
+{
+  "rules": [
+    {
+      "id": "prototype-testnet",
+      "quote": "Working prototype or proof-of-concept (deployed on test net acceptable)",
+      "source": "https://cmte.ieee.org/turkiye-blockchain/hackatlon/",
+      "dq": false,
+      "kind": "attest",
+      "added": "2026-10-19T13:32:06Z"
+    },
+    {
+      "id": "repo-docs",
+      "quote": "Source code repository (GitHub/GitLab) with clear documentation",
+      "source": "https://cmte.ieee.org/turkiye-blockchain/hackatlon/",
+      "dq": false,
+      "kind": "file",
+      "added": "2026-10-19T13:32:06Z",
+      "paths": [
+        "README.md"
+      ]
+    },
+    {
+      "id": "arch-spec",
+      "quote": "Architecture diagram and technical specification",
+      "source": "https://cmte.ieee.org/turkiye-blockchain/hackatlon/",
+      "dq": false,
+      "kind": "file",
+      "added": "2026-10-19T13:32:06Z",
+      "paths": [
+        "ARCHITECTURE.md",
+        "docs/technical-specification.md",
+        "docs/architecture-diagram.svg"
+      ]
+    },
+    {
+      "id": "video-3min",
+      "quote": "Technical Deliverables: 3-minute video demonstration",
+      "source": "https://cmte.ieee.org/turkiye-blockchain/hackatlon/",
+      "dq": false,
+      "kind": "attest",
+      "added": "2026-10-19T13:32:22Z"
+    },
+    {
+      "id": "security-doc",
+      "quote": "Security and data integrity assessment document",
+      "source": "https://cmte.ieee.org/turkiye-blockchain/hackatlon/",
+      "dq": false,
+      "kind": "file",
+      "added": "2026-10-19T13:32:23Z",
+      "paths": [
+        "docs/security-and-data-integrity.md"
+      ]
+    },
+    {
+      "id": "problem-statement",
+      "quote": "Problem statement and solution overview (max 2 pages)",
+      "source": "https://cmte.ieee.org/turkiye-blockchain/hackatlon/",
+      "dq": false,
+      "kind": "file",
+      "added": "2026-10-19T13:32:23Z",
+      "paths": [
+        "docs/problem-statement.md"
+      ]
+    },
+    {
+      "id": "climate-impact",
+      "quote": "Climate impact assessment and carbon reduction projections",
+      "source": "https://cmte.ieee.org/turkiye-blockchain/hackatlon/",
+      "dq": false,
+      "kind": "section",
+      "added": "2026-10-19T13:32:23Z",
+      "file": "docs/climate-impact.md",
+      "heading": "Carbon reduction projections",
+      "number": true
+    },
+    {
+      "id": "adoption",
+      "quote": "Implementation and adoption strategy",
+      "source": "https://cmte.ieee.org/turkiye-blockchain/hackatlon/",
+      "dq": false,
+      "kind": "file",
+      "added": "2026-10-19T13:32:24Z",
+      "paths": [
+        "docs/adoption-strategy.md"
+      ]
+    },
+    {
+      "id": "roadmap",
+      "quote": "Scalability and sustainability roadmap",
+      "source": "https://cmte.ieee.org/turkiye-blockchain/hackatlon/",
+      "dq": false,
+      "kind": "file",
+      "added": "2026-10-19T13:32:24Z",
+      "paths": [
+        "docs/scalability-roadmap.md"
+      ]
+    },
+    {
+      "id": "user-testing",
+      "quote": "User testing results (if applicable)",
+      "source": "https://cmte.ieee.org/turkiye-blockchain/hackatlon/",
+      "dq": false,
+      "kind": "file",
+      "added": "2026-10-19T13:32:24Z",
+      "paths": [
+        "docs/user-testing.md"
+      ]
+    }
+  ]
+}
