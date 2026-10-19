@@ -261,7 +261,9 @@
       "deps": [
         "T05"
       ],
-      "writes": [],
+      "writes": [
+        "web/e2e/take.spec.ts"
+      ],
       "suite": false,
       "acceptance": [
         "WHEN the take is reviewed THE SYSTEM SHALL show the first screen, the five steps, the lit cells and the receipt within 3 minutes"
@@ -270,8 +272,13 @@
         "observe: backup take recorded at ../hackathon-idea/ieee-climatechain-2026/takes/backup-local.webm with the five steps and the receipt visible"
       ],
       "rollback": "n/a",
-      "status": "todo",
-      "notes": ""
+      "status": "done",
+      "notes": "Recorded with Playwright video capture through web/e2e/take.spec.ts, which runs only when TAKE_OUT is set; the file itself stays outside the repository.",
+      "base": "7fedd42",
+      "started_after": 23,
+      "evidence": [
+        "E0024"
+      ]
     },
     {
       "id": "T07",
