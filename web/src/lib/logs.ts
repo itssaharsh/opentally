@@ -10,14 +10,27 @@ export async function eventsChunked<T>(
 ): Promise<T[]> {
   const head = await client.getBlockNumber();
   if (fromBlock > head) return [];
-  if (!span) return read(fromBlock, head);
+  if (!span) return behindRetry(() => read(fromBlock, head));
   const step = BigInt(span);
   const ranges: [bigint, bigint][] = [];
   for (let a = fromBlock; a <= head; a += step) ranges.push([a, a + step - 1n > head ? head : a + step - 1n]);
   const out: T[] = [];
   for (let i = 0; i < ranges.length; i += parallel) {
-    const part = await Promise.all(ranges.slice(i, i + parallel).map(([f, t]) => read(f, t)));
+    const part = await Promise.all(ranges.slice(i, i + parallel).map(([f, t]) => behindRetry(() => read(f, t))));
     for (const p of part) out.push(...p);
   }
   return out;
+}
+
+// The head came from one node; the range can land on another that is a block or two behind it.
+const BEHIND = /beyond current head|after last accepted block|invalid block range|block not found|header not found|could not be found/i;
+async function behindRetry<T>(fn: () => Promise<T>, tries = 8, waitMs = 1_500): Promise<T> {
+  for (let i = 1; ; i++) {
+    try { return await fn(); }
+    catch (e) {
+      const msg = e instanceof Error ? `${e.message} ${(e as { details?: string }).details ?? ""}` : String(e);
+      if (i >= tries || !BEHIND.test(msg)) throw e;
+      await new Promise((r) => setTimeout(r, waitMs));
+    }
+  }
 }

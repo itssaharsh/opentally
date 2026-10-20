@@ -16,7 +16,11 @@ export async function POST(req: Request) {
   const month = Number(url.searchParams.get("month") ?? 4);
   let inst: Awaited<ReturnType<typeof instanceFor>>;
   try { inst = await instanceFor(url.searchParams.get("programme")); }
-  catch (e) { if (e instanceof UnknownProgramme) return new Response(e.message, { status: 400 }); throw e; }
+  catch (e) {
+    if (e instanceof UnknownProgramme) return new Response(e.message, { status: 400 });
+    console.error("run: could not read the programme list:", (e as Error).message.split("\n").slice(0, 2).join(" "));
+    return new Response("The test network didn't answer in time. Press Retry release.", { status: 503 });
+  }
   if (!inst.fresh) {
     if (busyInstances().has(inst.address.toLowerCase())) return new Response("A release is already running on this programme; wait for it to finish.", { status: 429 });
     return new Response("This programme has already been released. Open a fresh one from the first screen.", { status: 409 });

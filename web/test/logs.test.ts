@@ -15,3 +15,9 @@ it("reads once when the endpoint has no range limit, and nothing when the start 
   await eventsChunked(client, async () => { n++; return []; }, 11n, 50);
   expect(n).toBe(1);
 });
+it("retries a range that landed on a node behind the head it was planned against", async () => {
+  const client = { getBlockNumber: async () => 10n };
+  let n = 0;
+  const out = await eventsChunked(client, async () => { if (++n === 1) throw new Error("block range extends beyond current head block: requested 10, head 9"); return ["ok"]; }, 0n, 50);
+  expect(out).toEqual(["ok"]); expect(n).toBe(2);
+});
