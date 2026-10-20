@@ -16,6 +16,8 @@ const STEP_NAMES = ["Verifying 50 site-signed summaries", "Screening traces agai
 function fmt(n: number, digits = 0) { return n.toLocaleString("en-US", { maximumFractionDigits: digits, minimumFractionDigits: digits }); }
 function short(h: string) { return h.length > 12 ? `${h.slice(0, 6)}…${h.slice(-4)}` : h; }
 
+const explorerName = (url: string) => url.includes("basescan") ? "Basescan" : url.includes("etherscan") ? "Etherscan" : "the explorer";
+
 export function Tally({ initial, error, demoMonth, judgeCard, record = false, preview = null }: Props) {
   const [state, setState] = useState<TallyState | null>(preview?.state ?? initial);
   const [stale, setStale] = useState<string | null>(preview?.stale ?? error ?? null);
@@ -248,7 +250,7 @@ export function Tally({ initial, error, demoMonth, judgeCard, record = false, pr
             <span className="font-mono text-sm">{short(r.txHash)}</span>
             <button type="button" className="h-8 px-2.5 rounded-md text-ink-muted text-sm hover:bg-surface-2" onClick={() => navigator.clipboard?.writeText(r.txHash)}>Copy hash</button>
             {!preview && <Resum programme={state.instance} fromBlock={state.fromBlock} rpc={state.publicRpc} chainId={state.chainId} network={state.network} logSpan={state.logSpan} />}
-            {state.explorer ? <a className="text-sm font-semibold no-underline flex items-center gap-1.5" href={`${state.explorer}/tx/${r.txHash}`} target="_blank" rel="noreferrer">View on Sepolia <span aria-hidden="true">↗</span></a> : <span className="text-sm text-ink-muted">local chain</span>}
+            {state.explorer ? <a className="text-sm font-semibold no-underline flex items-center gap-1.5" href={`${state.explorer}/tx/${r.txHash}`} target="_blank" rel="noreferrer">View on {explorerName(state.explorer)} <span aria-hidden="true">↗</span></a> : <span className="text-sm text-ink-muted">local chain</span>}
           </div>
         ))}
         {(running || events.length > 0) && (

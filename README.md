@@ -20,6 +20,18 @@ A results-based financing programme pays a mini-grid developer a fixed grant for
 
 Press **Run month 4 release** on the first screen. You will see 50 site-signed summaries verified (one refused first for a wrong site key), 3 connections held (two identical meters and one flat one), 47 released in one transaction, and the receipt. Then press **Re-sum**, and open a held connection to lift its hold. Nothing needs an account. Each visitor gets a fresh programme; your run stays at its own address.
 
+## On chain
+
+Base Sepolia testnet (chain 84532). Source verified on Sourcify.
+
+| Contract | Address |
+|---|---|
+| OpenTallyFactory | [0x57a62103b0de09a65d84ecf90984ff597085fa75](https://sepolia.basescan.org/address/0x57a62103b0de09a65d84ecf90984ff597085fa75) ([source](https://sourcify.dev/server/repo-ui/84532/0x57a62103b0de09a65d84ecf90984ff597085fa75)) |
+| TestUSD (tUSD) | [0x0c491dbab75025e2b6f318e6daf3ce98b5a538c2](https://sepolia.basescan.org/address/0x0c491dbab75025e2b6f318e6daf3ce98b5a538c2) ([source](https://sourcify.dev/server/repo-ui/84532/0x0c491dbab75025e2b6f318e6daf3ce98b5a538c2)) |
+| A released programme | [0x7DE8B364d4Cdf35cccC902040dDDbb0c9100B277](https://sepolia.basescan.org/address/0x7DE8B364d4Cdf35cccC902040dDDbb0c9100B277): 47 of 50 paid, 16,450 tUSD |
+
+Each visitor's programme is a fresh instance created by the factory; its address is shown on the first screen.
+
 ## What is real and what is not
 
 | Part | Status |
