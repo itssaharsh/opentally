@@ -615,8 +615,10 @@
         "observe: final take recorded and under 180 s"
       ],
       "rollback": "n/a",
-      "status": "todo",
-      "notes": ""
+      "status": "doing",
+      "notes": "",
+      "base": "5e0e93a",
+      "started_after": 96
     },
     {
       "id": "T15",

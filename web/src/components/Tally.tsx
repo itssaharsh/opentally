@@ -84,6 +84,18 @@ export function Tally({ initial, error, demoMonth, judgeCard, record = false, pr
   const current = (n: number) => events.filter((e) => e.step === n).at(-1);
   const lastStep = events.filter((e) => e.step > 0).at(-1);
 
+  async function followOnChain(address: string): Promise<boolean> {
+    for (let i = 0; i < 60; i++) {
+      await new Promise((r) => setTimeout(r, 3000));
+      try {
+        const q = new URLSearchParams({ month: String(demoMonth), programme: address });
+        const j = await (await fetch(`/api/state?${q}`, { cache: "no-store" })).json();
+        if (j.ok) { setState(j.state); if (j.state.paidCount > 0) return true; }
+      } catch { /* keep following */ }
+    }
+    return false;
+  }
+
   async function run() {
     if (preview) return;
     setRunError(null); setEvents([]); setRunning(true); setLitCount(null); setRunStartedAt(Date.now()); setRunEndedAt(null);
@@ -116,7 +128,16 @@ export function Tally({ initial, error, demoMonth, judgeCard, record = false, pr
           if (ev.step === 2 && ev.status === "done") await refresh();
         }
       }
-    } catch (e) { setRunError((e as Error).message); }
+    } catch (e) {
+      const msg = (e as Error).message;
+      // a phone or a proxy can drop a long stream while the run carries on server-side: follow it on the chain
+      if (programme && !ac.signal.aborted && /network|fetch|load failed|terminated|reset/i.test(msg)) {
+        setPreparing("The live step stream dropped. Following the release on the chain.");
+        const ok = await followOnChain(programme);
+        setPreparing(null);
+        if (!ok) setRunError("Lost the connection to the run. Reload the page to see where it got to.");
+      } else setRunError(msg);
+    }
     finally { setRunning(false); abortRef.current = null; setRunEndedAt(Date.now()); }
   }
 
