@@ -579,18 +579,20 @@
         "AC-13"
       ],
       "verify": [
-        "python3 /home/saharsh/.claude/plugins/synced/2aed9540-0336-45f7-a465-5b4a22af8e75_644037e8-d800-4f00-aeb2-b7ecb8482342/prod-ui~g2/skills/prod-ui/scripts/foldcheck.py $DEPLOY_URL --action \"text=Run month 4 release\" --result \"text=of 50 paid\" --promise tally --out qa/fold",
+        "python3 /home/saharsh/.claude/plugins/synced/2aed9540-0336-45f7-a465-5b4a22af8e75_644037e8-d800-4f00-aeb2-b7ecb8482342/prod-ui/skills/prod-ui/scripts/foldcheck.py $DEPLOY_URL --action \"text=Run month 4 release\" --result \"text=of 50 paid\" --promise tally --out qa/fold",
         "observe: the demo flow ran three times in a row on the deployed URL with a reset between runs",
         "observe: one unseen input and the chain-off path recorded"
       ],
       "rollback": "n/a",
-      "status": "todo",
-      "notes": ""
+      "status": "doing",
+      "notes": "",
+      "base": "576d280",
+      "started_after": 90
     },
     {
       "id": "T14",
       "title": "Final take from the frozen build",
-      "objective": "the 3-minute video recorded from the deployed URL with ?record=1&judge=0, following contract §11",
+      "objective": "the 3-minute video recorded from the deployed URL with ?record=1&judge=0, following contract \u00a711",
       "role": "product-engineer",
       "size": "S",
       "kind": "record",
@@ -600,7 +602,7 @@
       "writes": [],
       "suite": false,
       "acceptance": [
-        "WHEN the take is reviewed THE SYSTEM SHALL run at most 180 s and show every beat of §11"
+        "WHEN the take is reviewed THE SYSTEM SHALL run at most 180 s and show every beat of \u00a711"
       ],
       "verify": [
         "observe: final take recorded and under 180 s"

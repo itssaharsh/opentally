@@ -148,6 +148,7 @@ export function Tally({ initial, error, demoMonth, judgeCard, record = false, pr
 
   return (
     <main className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 pt-6 sm:pt-8 pb-28 sm:pb-10 flex flex-col gap-7">
+      <h1 className="sr-only">The programme tally: escrow, connections paid and held, and the release rule</h1>
       {preview && <p className="text-sm font-semibold bg-[var(--warning)] text-white rounded-lg px-4 py-2 m-0" data-testid="preview-banner">Preview of the {preview.name} state, built from this programme&apos;s data. Nothing here ran.</p>}
       {stale && <p className="text-sm text-ink-muted bg-surface-sunken rounded-lg px-4 py-2 m-0" role="status" data-testid="stale">{state ? `Chain unreachable since ${new Date(state.syncedAt).toUTCString().slice(17, 22)} UTC, showing the last synced state.` : "Chain unreachable, and nothing has been synced yet. Retrying when the page is focused."}</p>}
       <div className="grid grid-cols-12 gap-6 items-start">
