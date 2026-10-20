@@ -6,6 +6,7 @@ import type { PageState as TallyState } from "@/lib/chain";
 import type { StepEvent } from "@/lib/pipeline-types";
 import rule from "@/data/rule.json";
 import { Resum } from "./Resum";
+import { noteBlock } from "@/lib/seen";
 
 import type { Preview } from "@/lib/preview";
 
@@ -56,6 +57,7 @@ export function Tally({ initial, error, demoMonth, judgeCard, record = false, pr
       const r = await fetch(`/api/release?programme=${programme}`, { method: "POST" });
       const j = await r.json();
       if (!j.ok) { setRelNote(j.error ?? "The release didn't go through."); return; }
+      noteBlock(j.blockNumber);
       setRelNote(`Released ${j.count} more in one transaction.`);
       await refresh();
     } catch (e) { setRelNote((e as Error).message); }
@@ -102,6 +104,7 @@ export function Tally({ initial, error, demoMonth, judgeCard, record = false, pr
           const ev = JSON.parse(line.slice(6)) as StepEvent;
           if (ev.name === "end") { if (ev.status === "failed") setRunError(ev.detail ?? "run failed"); continue; }
           if (ev.name === "programme") continue;
+          noteBlock(ev.blockNumber);
           setEvents((xs) => [...xs, ev]);
           if (ev.step === 5 && ev.status === "done") {
             await refresh();
@@ -213,7 +216,7 @@ export function Tally({ initial, error, demoMonth, judgeCard, record = false, pr
                 {s.connections.map((c) => {
                   const st = shownState(c);
                   return (
-                    <Link key={c.id} href={`/connection/${c.id}?programme=${state.instance}`} className="cell" data-state={st} data-testid={`cell-${c.code}`}
+                    <Link key={c.id} prefetch={false} href={`/connection/${c.id}?programme=${state.instance}`} className="cell" data-state={st} data-testid={`cell-${c.code}`}
                       title={st === "paid" ? `${c.code}, paid in month ${c.paidMonth}` : st === "held" ? `${c.code}, held` : st === "eligible" ? `${c.code}, eligible: rule met` : `${c.code}, pending`}>
                       {st === "paid" && <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" stroke="var(--ink)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none" /></svg>}
                       {st === "held" && <span aria-hidden="true">H</span>}

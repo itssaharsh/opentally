@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { noteBlock } from "@/lib/seen";
 
 export function HoldActions({ id, programme, held }: { id: number; programme: string; held: boolean }) {
   const [busy, setBusy] = useState<null | "lift" | "keep">(null);
@@ -12,6 +13,7 @@ export function HoldActions({ id, programme, held }: { id: number; programme: st
       const r = await fetch("/api/hold", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ id, action, programme }) });
       const j = await r.json();
       if (!j.ok) { setNote(j.error ?? "That didn't go through."); return; }
+      noteBlock(j.blockNumber);
       setNote(action === "lift" ? "Hold lifted on the chain. The programme pays this connection at its next release." : "Hold kept. Nothing changed on the chain.");
       router.refresh();
     } catch (e) { setNote((e as Error).message); }

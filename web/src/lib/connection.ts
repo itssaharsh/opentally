@@ -1,7 +1,8 @@
 import "server-only";
 import { encodePacked, keccak256, type Address } from "viem";
 import { openTallyAbi } from "./abi";
-import { publicClient, instanceFor, DEMO_MONTH, chainCfg } from "./chain";
+import { publicClient, instanceFor, DEMO_MONTH, chainCfg, readBlock, lagging } from "./chain";
+import { readAfter } from "./lag";
 import { screenMonth, type Trace } from "./screen";
 import { codeFor } from "./state";
 import programme from "../data/programme.json";
@@ -29,18 +30,18 @@ export async function readConnection(id: number, requested?: string | null): Pro
   if (!meta) return null;
   const { address } = await instanceFor(requested);
   const pc = publicClient();
-  const c = { address: address as Address, abi: openTallyAbi } as const;
-  const [conn, batch4, rule, grant] = await Promise.all([
+  const c = { address: address as Address, abi: openTallyAbi, blockNumber: await readBlock(pc) } as const;
+  const [conn, batch4, rule, grant] = await readAfter(() => Promise.all([
     pc.readContract({ ...c, functionName: "getConnection", args: [id] }),
     pc.readContract({ ...c, functionName: "batchSubmittedAt", args: [DEMO_MONTH] }),
     pc.readContract({ ...c, functionName: "rule" }),
     pc.readContract({ ...c, functionName: "grantPerConnection" }),
-  ]);
+  ]), lagging);
   const month = (batch4 as bigint) === 0n ? DEMO_MONTH - 1 : DEMO_MONTH;
-  const [summary, site] = await Promise.all([
+  const [summary, site] = await readAfter(() => Promise.all([
     pc.readContract({ ...c, functionName: "getSummary", args: [month, id] }),
     pc.readContract({ ...c, functionName: "getSite", args: [conn.siteId] }),
-  ]);
+  ]), lagging);
   const [activeDaysMin, kwhMilliMin] = rule as unknown as [number, number, number];
   const trace = meta.traces[String(month)];
   const cohort = conns.filter((x) => x.siteIndex === meta.siteIndex);

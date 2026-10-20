@@ -9,6 +9,7 @@ import { busyInstances } from "./limiter";
 import { store } from "./store";
 import { eventsChunked } from "./logs";
 import { readAfter } from "./lag";
+import { SEEN_COOKIE } from "./seen";
 
 export type Deployment = typeof deploymentJson;
 export const deployment: Deployment = deploymentJson;
@@ -16,11 +17,18 @@ export const chainCfg = chainInfo(deployment.chainId);
 export const DEMO_MONTH = 4;
 
 export function rpcUrl() { return process.env.RPC_URL ?? chainCfg.defaultRpc; }
-const lagging = chainCfg.minGasEth > 0;
+export const lagging = chainCfg.minGasEth > 0;
 /** The block to read at: the node's head, or our own latest write if the node answering is behind it. */
-async function readBlock(client: PublicClient): Promise<bigint> {
+export async function readBlock(client: PublicClient): Promise<bigint> {
   const head = await client.getBlockNumber({ cacheTime: 0 });
-  return store.lastWrite && store.lastWrite > head ? store.lastWrite : head;
+  let want = store.lastWrite && store.lastWrite > head ? store.lastWrite : head;
+  // the visitor's own latest write (see lib/seen.ts); capped a minute ahead so a forged cookie cannot stall a read
+  try {
+    const { cookies } = await import("next/headers");
+    const v = (await cookies()).get(SEEN_COOKIE)?.value;
+    if (v && /^\d{1,12}$/.test(v)) { const b = BigInt(v); if (b > want && b <= head + 30n) want = b; }
+  } catch { /* outside a request: scripts and tests */ }
+  return want;
 }
 export function logSpan() { return Number(process.env.LOG_SPAN ?? chainCfg.logSpan); }
 

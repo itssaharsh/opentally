@@ -8,10 +8,8 @@ import { readAfter } from "./lag";
 import { screenMonth, type Trace } from "./screen";
 import programme from "../data/programme.json";
 
-export type StepEvent = {
-  step: number; name: string; status: "running" | "done" | "failed" | "waiting";
-  detail?: string; count?: number; txHash?: string; gasUsed?: number; secondsLeft?: number; at: number;
-};
+export type { StepEvent } from "./pipeline-types";
+import type { StepEvent } from "./pipeline-types";
 
 export const STEP_NAMES = [
   "Verifying 50 site-signed summaries",
@@ -78,7 +76,7 @@ export async function* runMonth(address: Address, month = DEMO_MONTH, opts: { wr
     const hash = await owner.writeContract({ ...c, functionName: "submitSummaries", args: [month, items, sigs] });
     const receipt = await pc.waitForTransactionReceipt({ hash });
     seen = receipt.blockNumber;
-    yield { step: 1, name: STEP_NAMES[0], status: "done", count: items.length, txHash: hash, gasUsed: Number(receipt.gasUsed), detail: `${items.length} of ${items.length} verified on-chain${rejectNote ? "; " + rejectNote : ""}`, at: now() };
+    yield { step: 1, name: STEP_NAMES[0], status: "done", count: items.length, txHash: hash, blockNumber: Number(receipt.blockNumber), gasUsed: Number(receipt.gasUsed), detail: `${items.length} of ${items.length} verified on-chain${rejectNote ? "; " + rejectNote : ""}`, at: now() };
   } else {
     yield { step: 1, name: STEP_NAMES[0], status: "done", count: connections.length, detail: "already submitted earlier; verified on-chain", at: now() };
   }
@@ -94,7 +92,7 @@ export async function* runMonth(address: Address, month = DEMO_MONTH, opts: { wr
     holdTx = await verifier.writeContract({ ...c, functionName: "holdMany", args: [toHold.map((f) => f.id), toHold.map((f) => f.reason)] });
     seen = (await pc.waitForTransactionReceipt({ hash: holdTx })).blockNumber;
   }
-  yield { step: 2, name: STEP_NAMES[1], status: "done", count: flags.length, txHash: holdTx, detail: flags.length ? `${flags.length} held: ${flags.map((f) => `${f.code} (${f.reason === 1 ? "identical to " + f.pairedWith : f.reason === 2 ? "flat" : "outlier"})`).join(", ")}` : "nothing held", at: now() };
+  yield { step: 2, name: STEP_NAMES[1], status: "done", count: flags.length, txHash: holdTx, blockNumber: seen ? Number(seen) : undefined, detail: flags.length ? `${flags.length} held: ${flags.map((f) => `${f.code} (${f.reason === 1 ? "identical to " + f.pairedWith : f.reason === 2 ? "flat" : "outlier"})`).join(", ")}` : "nothing held", at: now() };
 
   // ---- step 3: the rule
   yield { step: 3, name: STEP_NAMES[2], status: "running", at: now() };
@@ -129,7 +127,7 @@ export async function* runMonth(address: Address, month = DEMO_MONTH, opts: { wr
         if (ev.eventName === "ReleaseBatch") { count = Number((ev.args as { count: number }).count); total = (ev.args as { total: bigint }).total; }
       } catch { /* other logs */ }
     }
-    yield { step: 5, name: STEP_NAMES[4], status: "done", count, txHash: hash, gasUsed: Number(receipt.gasUsed), detail: `${count} connections released, ${Number(total) / 1e6} tUSD, block ${receipt.blockNumber}`, at: now() };
+    yield { step: 5, name: STEP_NAMES[4], status: "done", count, txHash: hash, blockNumber: Number(receipt.blockNumber), gasUsed: Number(receipt.gasUsed), detail: `${count} connections released, ${Number(total) / 1e6} tUSD, block ${receipt.blockNumber}`, at: now() };
   } catch (e) {
     const r = revertName(e);
     yield { step: 5, name: STEP_NAMES[4], status: "failed", detail: r ? `the release reverted: ${r.name}; nothing moved` : `the release failed: ${(e as Error).message.split("\n")[0]}; nothing moved`, at: now() };
