@@ -31,3 +31,4 @@ video-script.md
 storage-state*.json
 storage_state*.json
 *.storage-state.json
+qa/
