@@ -353,10 +353,16 @@
         "observe: verified source on Basescan (Base Sepolia) for OpenTally, OpenTallyFactory and TestUSD"
       ],
       "rollback": "redeploy the previous Vercel deployment; a bad instance is replaced through the factory",
-      "status": "doing",
+      "status": "done",
       "notes": "Sepolia ruled out (F-0003). Blocked on Base Sepolia test ETH in the deployer wallet.",
       "base": "f4f55c4",
-      "started_after": 77
+      "started_after": 77,
+      "evidence": [
+        "E0086",
+        "E0088",
+        "E0089",
+        "E0090"
+      ]
     },
     {
       "id": "T08",
@@ -584,7 +590,7 @@
     {
       "id": "T14",
       "title": "Final take from the frozen build",
-      "objective": "the 3-minute video recorded from the deployed URL with ?record=1&judge=0, following contract \u00a711",
+      "objective": "the 3-minute video recorded from the deployed URL with ?record=1&judge=0, following contract §11",
       "role": "product-engineer",
       "size": "S",
       "kind": "record",
@@ -594,7 +600,7 @@
       "writes": [],
       "suite": false,
       "acceptance": [
-        "WHEN the take is reviewed THE SYSTEM SHALL run at most 180 s and show every beat of \u00a711"
+        "WHEN the take is reviewed THE SYSTEM SHALL run at most 180 s and show every beat of §11"
       ],
       "verify": [
         "observe: final take recorded and under 180 s"

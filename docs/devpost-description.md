@@ -1,5 +1,7 @@
 Mini-grid grants in Nigeria wait on four private tallies. OpenTally releases each connection's grant on one public rule anyone can re-sum.
 
+Live demo: https://opentally.vercel.app · Code: https://github.com/itssaharsh/opentally
+
 ## Inspiration
 
 Results-based financing pays mini-grid developers a fixed grant for each household they connect, after verification: US$350 under Nigeria's Electrification Project, US$592 under the SEforALL Universal Energy Facility. The DARES verification terms tell the independent verifier to build its own dashboard and check it against three other tallies, and say its recommendations are not binding. A study of thirteen such programmes found that only 14% of US$9.1 billion committed to African mini-grids had been disbursed by early 2025 and asked for predictable, on-time disbursement. Developers build first and wait months to be paid; outsiders cannot rebuild the totals.
@@ -16,11 +18,11 @@ Solidity contracts (escrow, EIP-712 summaries, rule, holds, release, a factory f
 
 ## Challenges we ran into
 
-Making the release need no trusted caller while the verifier can still stop any payment. Giving each judge a fresh programme when the first judge's run would otherwise leave everyone else looking at a finished one. Keeping state shared between Next.js routes and pages, which do not share module state.
+Making the release need no trusted caller while the verifier can still stop any payment. Giving each judge a fresh programme when the first judge's run would otherwise leave everyone else looking at a finished one. Keeping state shared between Next.js routes and pages, which do not share module state. Moving from Sepolia to Base Sepolia when Sepolia's code pricing put the factory over the per-transaction gas cap, then hardening every read against load-balanced public RPC nodes that answer a block behind and cap log queries.
 
 ## What is real and what is not
 
-The contract, the signatures, the rule, the holds, the release and the records are real, on a public test network. The 50 connections, their readings and the three planted faults are synthetic and labelled on screen. The consumption threshold is chosen by us because the terms name it without a value. The demo server holds every key so nobody needs a wallet; a real programme gives each key to its holder.
+The contract, the signatures, the rule, the holds, the release and the records are real, on the Base Sepolia test network. The 50 connections, their readings and the three planted faults are synthetic and labelled on screen. The consumption threshold is chosen by us because the terms name it without a value. The demo server holds every key so nobody needs a wallet; a real programme gives each key to its holder.
 
 ## What's next
 
