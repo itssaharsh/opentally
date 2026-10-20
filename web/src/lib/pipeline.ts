@@ -4,6 +4,7 @@ import { openTallyAbi } from "./abi";
 import { publicClient, chainCfg, DEMO_MONTH, invalidateInstance } from "./chain";
 import { gatewayFor, ROLE } from "./keys";
 import { wallet } from "./wallets";
+import { readAfter } from "./lag";
 import { screenMonth, type Trace } from "./screen";
 import programme from "../data/programme.json";
 
@@ -40,6 +41,8 @@ const connections = (programme as unknown as { connections: Conn[] }).connection
 
 export async function* runMonth(address: Address, month = DEMO_MONTH, opts: { wrongKeyDemo?: boolean } = { wrongKeyDemo: true }): AsyncGenerator<StepEvent> {
   const pc = publicClient();
+  const lagging = chainCfg.minGasEth > 0;
+  let seen: bigint | undefined; // the block of this run's latest write; reads that depend on it ask for that block
   invalidateInstance();
   const chainId = await pc.getChainId();
   const owner = wallet(ROLE.owner);
@@ -74,6 +77,7 @@ export async function* runMonth(address: Address, month = DEMO_MONTH, opts: { wr
     }
     const hash = await owner.writeContract({ ...c, functionName: "submitSummaries", args: [month, items, sigs] });
     const receipt = await pc.waitForTransactionReceipt({ hash });
+    seen = receipt.blockNumber;
     yield { step: 1, name: STEP_NAMES[0], status: "done", count: items.length, txHash: hash, gasUsed: Number(receipt.gasUsed), detail: `${items.length} of ${items.length} verified on-chain${rejectNote ? "; " + rejectNote : ""}`, at: now() };
   } else {
     yield { step: 1, name: STEP_NAMES[0], status: "done", count: connections.length, detail: "already submitted earlier; verified on-chain", at: now() };
@@ -83,18 +87,18 @@ export async function* runMonth(address: Address, month = DEMO_MONTH, opts: { wr
   yield { step: 2, name: STEP_NAMES[1], status: "running", at: now() };
   const traces: Trace[] = connections.map((cn) => ({ id: cn.id, code: cn.code, siteIndex: cn.siteIndex, days: cn.traces[String(month)] }));
   const flags = screenMonth(traces);
-  const current = await Promise.all(flags.map((f) => pc.readContract({ ...c, functionName: "getConnection", args: [f.id] })));
+  const current = await Promise.all(flags.map((f) => readAfter(() => pc.readContract({ ...c, functionName: "getConnection", args: [f.id], blockNumber: seen }), lagging)));
   const toHold = flags.filter((f, i) => !current[i].held && !current[i].paid);
   let holdTx: Hex | undefined;
   if (toHold.length) {
     holdTx = await verifier.writeContract({ ...c, functionName: "holdMany", args: [toHold.map((f) => f.id), toHold.map((f) => f.reason)] });
-    await pc.waitForTransactionReceipt({ hash: holdTx });
+    seen = (await pc.waitForTransactionReceipt({ hash: holdTx })).blockNumber;
   }
   yield { step: 2, name: STEP_NAMES[1], status: "done", count: flags.length, txHash: holdTx, detail: flags.length ? `${flags.length} held: ${flags.map((f) => `${f.code} (${f.reason === 1 ? "identical to " + f.pairedWith : f.reason === 2 ? "flat" : "outlier"})`).join(", ")}` : "nothing held", at: now() };
 
   // ---- step 3: the rule
   yield { step: 3, name: STEP_NAMES[2], status: "running", at: now() };
-  const eligible = (await pc.readContract({ ...c, functionName: "eligible", args: [month] })) as readonly number[];
+  const eligible = (await readAfter(() => pc.readContract({ ...c, functionName: "eligible", args: [month], blockNumber: seen }), lagging)) as readonly number[];
   yield { step: 3, name: STEP_NAMES[2], status: "done", count: eligible.length, detail: `${eligible.length} eligible: active days and consumption meet the rule, not held, not yet paid`, at: now() };
 
   // ---- step 4: the window

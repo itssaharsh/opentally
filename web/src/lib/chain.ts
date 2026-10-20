@@ -7,6 +7,8 @@ import { pickInstance, type InstanceInfo, type Picked } from "./instances";
 import { chainInfo } from "./chains";
 import { busyInstances } from "./limiter";
 import { store } from "./store";
+import { eventsChunked } from "./logs";
+import { readAfter } from "./lag";
 
 export type Deployment = typeof deploymentJson;
 export const deployment: Deployment = deploymentJson;
@@ -14,11 +16,26 @@ export const chainCfg = chainInfo(deployment.chainId);
 export const DEMO_MONTH = 4;
 
 export function rpcUrl() { return process.env.RPC_URL ?? chainCfg.defaultRpc; }
+const lagging = chainCfg.minGasEth > 0;
+/** The block to read at: the node's head, or our own latest write if the node answering is behind it. */
+async function readBlock(client: PublicClient): Promise<bigint> {
+  const head = await client.getBlockNumber({ cacheTime: 0 });
+  return store.lastWrite && store.lastWrite > head ? store.lastWrite : head;
+}
+export function logSpan() { return Number(process.env.LOG_SPAN ?? chainCfg.logSpan); }
 
 let _client: PublicClient | null = null;
 export function publicClient(): PublicClient {
   if (_client) return _client;
-  _client = createPublicClient({ chain: chainCfg.chain, transport: http(rpcUrl(), { batch: true, timeout: 20_000 }) });
+  const c = createPublicClient({ chain: chainCfg.chain, transport: http(rpcUrl(), { batch: true, timeout: 20_000 }) });
+  // remember the newest block one of our own transactions landed in, so later reads can ask for at least that block
+  const wait = c.waitForTransactionReceipt.bind(c);
+  c.waitForTransactionReceipt = (async (args: Parameters<typeof wait>[0]) => {
+    const r = await wait(args);
+    if (!store.lastWrite || r.blockNumber > store.lastWrite) store.lastWrite = r.blockNumber;
+    return r;
+  }) as typeof wait;
+  _client = c as PublicClient;
   return _client;
 }
 
@@ -29,15 +46,23 @@ export async function listInstances(maxRecent = 12): Promise<InstanceInfo[]> {
   const cached = store.instanceList as { at: number; list: InstanceInfo[] } | null;
   if (cached && Date.now() - cached.at < 3_000) return cached.list;
   const client = publicClient();
-  const logs = await client.getContractEvents({ address: deployment.factory as Address, abi: openTallyFactoryAbi, eventName: "Created", fromBlock: BigInt(Math.max(0, deployment.deployBlock - 1)), strict: true });
+  // the factory's Created events, scanned incrementally: a warm server only reads the blocks since its last scan
+  const scan = (store.createdScan ??= { to: BigInt(Math.max(0, deployment.deployBlock - 1)) - 1n, logs: [] });
+  const head = await client.getBlockNumber();
+  if (head > scan.to) {
+    const fresh = await eventsChunked(client, (fromBlock, toBlock) => client.getContractEvents({ address: deployment.factory as Address, abi: openTallyFactoryAbi, eventName: "Created", fromBlock, toBlock, strict: true }), scan.to + 1n, logSpan());
+    scan.logs.push(...fresh); scan.to = head;
+  }
+  const logs = scan.logs as Awaited<ReturnType<typeof client.getContractEvents<typeof openTallyFactoryAbi, "Created">>>;
   const recent = logs.slice(-maxRecent);
+  const at = await readBlock(client);
   const list = await Promise.all(recent.map(async (l) => {
     const address = l.args.instance as Address;
-    const [paidCount, batch, prior] = await Promise.all([
-      client.readContract({ address, abi: openTallyAbi, functionName: "paidCount" }),
-      client.readContract({ address, abi: openTallyAbi, functionName: "batchSubmittedAt", args: [DEMO_MONTH] }),
-      client.readContract({ address, abi: openTallyAbi, functionName: "batchSubmittedAt", args: [DEMO_MONTH - 1] }),
-    ]);
+    const [paidCount, batch, prior] = await readAfter(() => Promise.all([
+      client.readContract({ address, abi: openTallyAbi, functionName: "paidCount", blockNumber: at }),
+      client.readContract({ address, abi: openTallyAbi, functionName: "batchSubmittedAt", args: [DEMO_MONTH], blockNumber: at }),
+      client.readContract({ address, abi: openTallyAbi, functionName: "batchSubmittedAt", args: [DEMO_MONTH - 1], blockNumber: at }),
+    ]), lagging);
     return { address, index: Number(l.args.index), fromBlock: l.blockNumber as bigint, paidCount: Number(paidCount),
       demoMonthSubmitted: (batch as bigint) !== 0n, ready: (prior as bigint) !== 0n };
   }));
@@ -65,7 +90,7 @@ export async function instanceFor(requested?: string | null): Promise<{ address:
 }
 
 export async function readReleases(client: PublicClient, address: Address, fromBlock: bigint): Promise<ReleaseView[]> {
-  const logs = await client.getContractEvents({ address, abi: openTallyAbi, eventName: "ReleaseBatch", fromBlock, strict: true });
+  const logs = await eventsChunked(client, (f, t) => client.getContractEvents({ address, abi: openTallyAbi, eventName: "ReleaseBatch", fromBlock: f, toBlock: t, strict: true }), fromBlock, logSpan());
   const out: ReleaseView[] = [];
   for (const l of logs) {
     const receipt = await client.getTransactionReceipt({ hash: l.transactionHash as Hex }).catch(() => null);
@@ -74,15 +99,16 @@ export async function readReleases(client: PublicClient, address: Address, fromB
   return out.filter((r) => r.count > 0);
 }
 
-export type PageState = TallyState & { fresh: boolean; pinned: boolean; spares: number; lastReleased: string | null; network: string; networkShort: string; fromBlock: number; publicRpc: string };
+export type PageState = TallyState & { fresh: boolean; pinned: boolean; spares: number; lastReleased: string | null; network: string; networkShort: string; fromBlock: number; publicRpc: string; logSpan: number };
 
 export async function readState(month = DEMO_MONTH, requested?: string | null): Promise<PageState> {
   const client = publicClient();
   const picked = await resolveInstance(requested);
   const address = picked.shown.address as Address;
   const fromBlock = picked.shown.fromBlock;
-  const c = { address, abi: openTallyAbi } as const;
-  const [programmeName, escrow, paidCount, paidTotal, rule, siteCount, connectionCount, batchAt, block] = await Promise.all([
+  const at = await readBlock(client);
+  const c = { address, abi: openTallyAbi, blockNumber: at } as const;
+  const [programmeName, escrow, paidCount, paidTotal, rule, siteCount, connectionCount, batchAt, block] = await readAfter(() => Promise.all([
     client.readContract({ ...c, functionName: "programmeName" }),
     client.readContract({ ...c, functionName: "escrowBalance" }),
     client.readContract({ ...c, functionName: "paidCount" }),
@@ -91,13 +117,13 @@ export async function readState(month = DEMO_MONTH, requested?: string | null): 
     client.readContract({ ...c, functionName: "siteCount" }),
     client.readContract({ ...c, functionName: "connectionCount" }),
     client.readContract({ ...c, functionName: "batchSubmittedAt", args: [month] }),
-    client.getBlock(),
-  ]);
+    client.getBlock({ blockNumber: at }),
+  ]), lagging);
   const n = Number(connectionCount);
   const summaryMonth = (batchAt as bigint) === 0n && month > 1 ? month - 1 : month;
-  const sites = await Promise.all(Array.from({ length: Number(siteCount) }, (_, i) => client.readContract({ ...c, functionName: "getSite", args: [i] })));
-  const connections = await Promise.all(Array.from({ length: n }, (_, i) => client.readContract({ ...c, functionName: "getConnection", args: [i] })));
-  const summaries = await Promise.all(Array.from({ length: n }, (_, i) => client.readContract({ ...c, functionName: "getSummary", args: [summaryMonth, i] })));
+  const sites = await readAfter(() => Promise.all(Array.from({ length: Number(siteCount) }, (_, i) => client.readContract({ ...c, functionName: "getSite", args: [i] }))), lagging);
+  const connections = await readAfter(() => Promise.all(Array.from({ length: n }, (_, i) => client.readContract({ ...c, functionName: "getConnection", args: [i] }))), lagging);
+  const summaries = await readAfter(() => Promise.all(Array.from({ length: n }, (_, i) => client.readContract({ ...c, functionName: "getSummary", args: [summaryMonth, i] }))), lagging);
   const releases = await readReleases(client, address, fromBlock);
   const [activeDaysMin, kwhMilliMin, windowSeconds] = rule as unknown as [number, number, number];
   const shaped = shapeState({
@@ -111,5 +137,5 @@ export async function readState(month = DEMO_MONTH, requested?: string | null): 
     releases,
   });
   const lastReleased = picked.lastReleased && picked.lastReleased.address.toLowerCase() !== address.toLowerCase() ? picked.lastReleased.address : null;
-  return { ...shaped, fresh: picked.fresh, pinned: picked.pinned, spares: picked.spares, lastReleased, network: chainCfg.label, networkShort: chainCfg.short, fromBlock: Number(fromBlock), publicRpc: process.env.NEXT_PUBLIC_RPC_URL ?? chainCfg.defaultRpc };
+  return { ...shaped, fresh: picked.fresh, pinned: picked.pinned, spares: picked.spares, lastReleased, network: chainCfg.label, networkShort: chainCfg.short, fromBlock: Number(fromBlock), publicRpc: process.env.NEXT_PUBLIC_RPC_URL ?? chainCfg.defaultRpc, logSpan: Number(process.env.NEXT_PUBLIC_LOG_SPAN ?? chainCfg.logSpan) };
 }

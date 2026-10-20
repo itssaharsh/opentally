@@ -1,5 +1,5 @@
 import "server-only";
-import { keccak256, toHex, type Address, type Hex } from "viem";
+import { keccak256, toHex, parseEventLogs, type Address, type Hex } from "viem";
 import { openTallyAbi, openTallyFactoryAbi, testUSDAbi } from "./abi";
 import { publicClient, deployment, invalidateInstance, listInstances } from "./chain";
 import { roleAccount, gatewayFor, ROLE } from "./keys";
@@ -37,8 +37,12 @@ export async function resetInstance(onStep?: (s: string) => void): Promise<{ ins
   const rule = { activeDaysMin: deployment.rule.activeDaysMin, kwhMilliMin: deployment.rule.kwhMilliMin, windowSeconds: deployment.rule.windowSeconds };
 
   onStep?.("Creating a fresh programme instance");
-  await wait(await owner.writeContract({ address: factory, abi: openTallyFactoryAbi, functionName: "create", args: [token, verifierAddr, funder.account.address, 350_000_000n, rule, data.programmeName] }));
-  const instance = (await pc.readContract({ address: factory, abi: openTallyFactoryAbi, functionName: "latest" })) as Address;
+  const createHash = await owner.writeContract({ address: factory, abi: openTallyFactoryAbi, functionName: "create", args: [token, verifierAddr, funder.account.address, 350_000_000n, rule, data.programmeName] });
+  txs.push(createHash);
+  // the new address comes from the receipt; a "latest" read can land on a node a block behind and return the previous one
+  const createReceipt = await pc.waitForTransactionReceipt({ hash: createHash });
+  const [created] = parseEventLogs({ abi: openTallyFactoryAbi, logs: createReceipt.logs, eventName: "Created" });
+  const instance = created.args.instance as Address;
   const c = { address: instance, abi: openTallyAbi } as const;
 
   onStep?.("Registering 3 sites");

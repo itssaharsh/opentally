@@ -2,13 +2,14 @@
 import { useRef, useState } from "react";
 import { createPublicClient, http, type Address } from "viem";
 import { openTallyAbi } from "@/lib/abi";
+import { eventsChunked } from "@/lib/logs";
 import { resum, toCsv, type ReleasedRecord, type ResumResult } from "@/lib/resum";
 
 type Row = { label: string; value?: string; done: boolean };
 
 // Re-sum in the visitor's own browser: read the Released events and the contract's counters straight from a public
 // RPC endpoint, add them up here, and compare. Falls back to this site's server only if the browser cannot reach the RPC.
-export function Resum({ programme, fromBlock, rpc, chainId, network }: { programme: string; fromBlock: number; rpc: string; chainId: number; network: string }) {
+export function Resum({ programme, fromBlock, rpc, chainId, network, logSpan }: { programme: string; fromBlock: number; rpc: string; chainId: number; network: string; logSpan: number }) {
   const dlg = useRef<HTMLDialogElement>(null);
   const [rows, setRows] = useState<Row[]>([]);
   const [result, setResult] = useState<ResumResult | null>(null);
@@ -26,7 +27,7 @@ export function Resum({ programme, fromBlock, rpc, chainId, network }: { program
         const client = createPublicClient({ transport: http(rpc, { timeout: 15_000 }) });
         const id = await client.getChainId();
         if (id !== chainId) throw new Error(`RPC is on chain ${id}, expected ${chainId}`);
-        const logs = await client.getContractEvents({ address: programme as Address, abi: openTallyAbi, eventName: "Released", fromBlock: BigInt(fromBlock), strict: true });
+        const logs = await eventsChunked(client, (f, t) => client.getContractEvents({ address: programme as Address, abi: openTallyAbi, eventName: "Released", fromBlock: f, toBlock: t, strict: true }), BigInt(fromBlock), logSpan);
         recs = logs.map((l) => ({ connectionId: Number(l.args.connectionId), month: Number(l.args.month), siteId: Number(l.args.siteId), amountTusd: Number(l.args.amount) / 1e6, txHash: l.transactionHash as string, blockNumber: Number(l.blockNumber) }));
         const [pc, pt] = await Promise.all([
           client.readContract({ address: programme as Address, abi: openTallyAbi, functionName: "paidCount" }),

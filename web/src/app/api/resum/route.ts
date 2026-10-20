@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { openTallyAbi } from "@/lib/abi";
-import { publicClient, instanceFor, UnknownProgramme } from "@/lib/chain";
+import { publicClient, instanceFor, logSpan, UnknownProgramme } from "@/lib/chain";
+import { eventsChunked } from "@/lib/logs";
 import { resum, toCsv, type ReleasedRecord } from "@/lib/resum";
 
 export const runtime = "nodejs";
@@ -12,7 +13,7 @@ export async function GET(req: Request) {
   const pc = publicClient();
   try {
     const { address, fromBlock } = await instanceFor(url.searchParams.get("programme"));
-    const logs = await pc.getContractEvents({ address, abi: openTallyAbi, eventName: "Released", fromBlock, strict: true });
+    const logs = await eventsChunked(pc, (f, t) => pc.getContractEvents({ address, abi: openTallyAbi, eventName: "Released", fromBlock: f, toBlock: t, strict: true }), fromBlock, logSpan());
     const records: ReleasedRecord[] = logs.map((l) => ({
       connectionId: Number(l.args.connectionId), month: Number(l.args.month), siteId: Number(l.args.siteId),
       amountTusd: Number(l.args.amount) / 1e6, txHash: l.transactionHash as string, blockNumber: Number(l.blockNumber),

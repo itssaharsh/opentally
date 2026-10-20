@@ -25,7 +25,7 @@ export async function POST(req: Request) {
   if (!f.ok) return new Response(f.reason ?? "The demo wallet is low on test ETH.", { status: 503 });
   if (!acquireRun(inst.address)) return new Response("A release is already running on this programme; wait for it to finish.", { status: 429 });
   invalidateInstance();
-  after(async () => { try { await ensureSpares(2); } catch { /* a spare that fails to seed is retried on the next run */ } });
+  after(async () => { try { await ensureSpares(2); } catch (e) { console.error("spare seeding failed (retried on the next run):", (e as Error).message.split("\n").slice(0, 3).join(" ")); } });
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
     async start(controller) {

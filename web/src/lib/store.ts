@@ -5,6 +5,8 @@ type Store = {
   runLocks: Map<string, number>;
   instanceList: { at: number; list: unknown[] } | null;
   seeding: Promise<unknown> | null;
+  createdScan?: { to: bigint; logs: unknown[] };
+  lastWrite?: bigint; // the newest block this server has seen one of its own transactions land in
 };
 const g = globalThis as unknown as { __opentally?: Store };
 export const store: Store = g.__opentally ?? (g.__opentally = { buckets: new Map(), runLocks: new Map(), instanceList: null, seeding: null });

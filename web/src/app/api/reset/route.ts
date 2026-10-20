@@ -17,6 +17,7 @@ export async function POST() {
     const r = await resetInstance((s) => steps.push(s));
     return NextResponse.json({ ok: true, programme: r.instance, txs: r.txs.length, steps });
   } catch (e) {
+    console.error("reset failed:", (e as Error).message.split("\n").slice(0, 6).join(" | "));
     return NextResponse.json({ ok: false, error: (e as Error).message.split("\n")[0], steps }, { status: 502 });
   }
 }
