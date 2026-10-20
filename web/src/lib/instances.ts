@@ -1,8 +1,9 @@
 // Which programme instance a visitor sees. Pure, so it is unit-tested; chain.ts feeds it the factory's instances.
-export type InstanceInfo = { address: string; index: number; fromBlock: bigint; paidCount: number; demoMonthSubmitted: boolean };
+export type InstanceInfo = { address: string; index: number; fromBlock: bigint; paidCount: number; demoMonthSubmitted: boolean; ready?: boolean };
 export type Picked = { shown: InstanceInfo; fresh: boolean; pinned: boolean; spares: number; lastReleased: InstanceInfo | null };
 
-export const isFresh = (i: InstanceInfo) => i.paidCount === 0 && !i.demoMonthSubmitted;
+// ready: the months before the demo month are on-chain, so a spare still being seeded is never handed out
+export const isFresh = (i: InstanceInfo) => i.ready !== false && i.paidCount === 0 && !i.demoMonthSubmitted;
 
 export function pickInstance(list: InstanceInfo[], requested?: string | null, busy: Set<string> = new Set()): Picked {
   if (!list.length) throw new Error("no programme instance has been created by the factory yet");

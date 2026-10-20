@@ -48,3 +48,9 @@ describe("pickInstance", () => {
     expect(() => pickInstance([])).toThrow(/no programme instance/);
   });
 });
+
+it("does not hand out a spare that is still being seeded", () => {
+  const p = pickInstance([inst(1, { ready: true }), inst(2, { ready: false })]);
+  expect(p.shown.index).toBe(1);
+  expect(p.spares).toBe(1);
+});

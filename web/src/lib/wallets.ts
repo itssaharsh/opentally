@@ -2,9 +2,16 @@ import "server-only";
 import { createWalletClient, http, parseEther, formatEther, type Address } from "viem";
 import { chainCfg, rpcUrl, publicClient } from "./chain";
 import { roleAccount, ROLE } from "./keys";
+import { retryLag } from "./lag";
 
 export function wallet(index: number) {
-  return createWalletClient({ account: roleAccount(index), chain: chainCfg.chain, transport: http(rpcUrl(), { timeout: 60_000 }) });
+  const w = createWalletClient({ account: roleAccount(index), chain: chainCfg.chain, transport: http(rpcUrl(), { timeout: 60_000 }) });
+  const lagging = chainCfg.minGasEth > 0;
+  const writeContract = w.writeContract.bind(w); const sendTransaction = w.sendTransaction.bind(w);
+  return Object.assign(w, {
+    writeContract: ((args: Parameters<typeof writeContract>[0]) => retryLag(() => writeContract(args), lagging)) as typeof writeContract,
+    sendTransaction: ((args: Parameters<typeof sendTransaction>[0]) => retryLag(() => sendTransaction(args), lagging)) as typeof sendTransaction,
+  });
 }
 
 export type Funds = { ok: boolean; deployerEth: number; ownerEth: number; verifierEth: number; reason?: string };

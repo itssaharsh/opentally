@@ -1,24 +1,24 @@
 {
-  "network": "localhost",
-  "chainId": 31337,
-  "token": "0xcbeaf3bde82155f56486fb5a1072cb8baaf547cc",
-  "factory": "0x1429859428c0abc9c2c47c8ee9fbaf82cfa0f20f",
-  "instance": "0xd79Df1927718b3212FA6E126Ec4Ad2b3Ee1263D9",
-  "deployBlock": 415,
-  "deployedAt": "2026-10-19T17:29:04.133Z",
+  "network": "baseSepolia",
+  "chainId": 84532,
+  "token": "0x0c491dbab75025e2b6f318e6daf3ce98b5a538c2",
+  "factory": "0x57a62103b0de09a65d84ecf90984ff597085fa75",
+  "instance": "0xe8Ad6cbB33b5d374dE9A6A4fD0827496837fC5dC",
+  "deployBlock": 48357519,
+  "deployedAt": "2026-10-20T08:02:46.299Z",
   "accounts": {
-    "deployerFunder": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
-    "owner": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
-    "verifier": "0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc",
+    "deployerFunder": "0xc11b85fddcbb2436ca2b09b0bfd1d3bf0105b181",
+    "owner": "0xf63ce296f13511989f4d50294de956208a0c53bd",
+    "verifier": "0x79157a47468b2a5d485b4b2df5267949ffeb93fb",
     "gateways": [
-      "0x90f79bf6eb2c4f870365e785982e1f101e93b906",
-      "0x15d34aaf54267db7d7c367839aaf71a00a2c6a65",
-      "0x9965507d1a55bcc2695c58ba16fb37d819b0a4dc"
+      "0x365b67a7f9b0474564ecf8d9ce1cb4a6ebde333c",
+      "0x8a707213344adcff02ae64f84913cbb0cdb6bd5f",
+      "0x7ca435fe4b11fa6298a1db265ff71ee808047b79"
     ],
     "payouts": [
-      "0x976ea74026e726554db657fa54763abd0c3a0aa9",
-      "0x14dc79964da2c08b23698b3d3cc7ca32193d9955",
-      "0x23618e81e3f5cdf7f54c3d65f7fbc0abf5b21e8f"
+      "0x42f402ed50ab315c44adfda90db68649eba10e07",
+      "0x864b91acfa4260bbda3024d34dc057f2ab0d9404",
+      "0x681c991ecbacbe2a6318865bf18a8941f68c4926"
     ]
   },
   "rule": {
@@ -28,5 +28,5 @@
   },
   "grantTusd": 350,
   "depositTusd": 17500,
-  "explorer": null
+  "explorer": "https://sepolia.basescan.org"
 }

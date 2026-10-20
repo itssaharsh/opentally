@@ -3,8 +3,8 @@
 // Account order on every network: 0 deployer and funder, 1 programme owner, 2 verifier, 3-5 site gateways, 6-8 payouts.
 import { writeFileSync } from "node:fs";
 import { network } from "hardhat";
-import { parseEther, formatEther, type Address } from "viem";
-import { seedInstance } from "./lib/seedChain.js";
+import { parseEther, formatEther, parseEventLogs, type Address } from "viem";
+import { seedInstance, retryLag } from "./lib/seedChain.js";
 import { GRANT_TUSD, RULE, PROGRAMME_NAME } from "./lib/seedData.js";
 
 const netName = process.env.HH_NETWORK ?? "localhost";
@@ -45,9 +45,11 @@ const rule = { ...RULE, windowSeconds };
 const spares = Math.max(1, Number(process.env.SPARES ?? 2));
 let instance = "0x" as Address; let firstBlock = 0n;
 for (let k = 0; k < spares; k++) {
-  const createHash = await ownerFactory.write.create([token.address, verifier.account.address, deployer.account.address, GRANT_TUSD, rule, PROGRAMME_NAME]);
+  const createHash = await retryLag(() => ownerFactory.write.create([token.address, verifier.account.address, deployer.account.address, GRANT_TUSD, rule, PROGRAMME_NAME]), chainId !== 31337);
   const createReceipt = await publicClient.waitForTransactionReceipt({ hash: createHash });
-  instance = (await factory.read.latest()) as Address;
+  // the instance comes from the receipt: a load-balanced public RPC can answer a read from a node a block behind
+  const [created] = parseEventLogs({ abi: factory.abi, logs: createReceipt.logs, eventName: "Created" });
+  instance = (created.args as { instance: Address }).instance;
   if (k === 0) firstBlock = createReceipt.blockNumber;
   console.log("instance", instance, "block", createReceipt.blockNumber);
   const tally = await viem.getContractAt("OpenTally", instance);

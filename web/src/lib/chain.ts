@@ -33,11 +33,13 @@ export async function listInstances(maxRecent = 12): Promise<InstanceInfo[]> {
   const recent = logs.slice(-maxRecent);
   const list = await Promise.all(recent.map(async (l) => {
     const address = l.args.instance as Address;
-    const [paidCount, batch] = await Promise.all([
+    const [paidCount, batch, prior] = await Promise.all([
       client.readContract({ address, abi: openTallyAbi, functionName: "paidCount" }),
       client.readContract({ address, abi: openTallyAbi, functionName: "batchSubmittedAt", args: [DEMO_MONTH] }),
+      client.readContract({ address, abi: openTallyAbi, functionName: "batchSubmittedAt", args: [DEMO_MONTH - 1] }),
     ]);
-    return { address, index: Number(l.args.index), fromBlock: l.blockNumber as bigint, paidCount: Number(paidCount), demoMonthSubmitted: (batch as bigint) !== 0n };
+    return { address, index: Number(l.args.index), fromBlock: l.blockNumber as bigint, paidCount: Number(paidCount),
+      demoMonthSubmitted: (batch as bigint) !== 0n, ready: (prior as bigint) !== 0n };
   }));
   store.instanceList = { at: Date.now(), list };
   return list;
