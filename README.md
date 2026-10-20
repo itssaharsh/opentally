@@ -22,13 +22,13 @@ Press **Run month 4 release** on the first screen. You will see 50 site-signed s
 
 ## On chain
 
-Base Sepolia testnet (chain 84532). Source verified on Sourcify.
+Base Sepolia testnet (chain 84532). Source verified on Sourcify and Blockscout.
 
 | Contract | Address |
 |---|---|
 | OpenTallyFactory | [0x57a62103b0de09a65d84ecf90984ff597085fa75](https://sepolia.basescan.org/address/0x57a62103b0de09a65d84ecf90984ff597085fa75) ([source](https://sourcify.dev/server/repo-ui/84532/0x57a62103b0de09a65d84ecf90984ff597085fa75)) |
 | TestUSD (tUSD) | [0x0c491dbab75025e2b6f318e6daf3ce98b5a538c2](https://sepolia.basescan.org/address/0x0c491dbab75025e2b6f318e6daf3ce98b5a538c2) ([source](https://sourcify.dev/server/repo-ui/84532/0x0c491dbab75025e2b6f318e6daf3ce98b5a538c2)) |
-| A released programme | [0x7DE8B364d4Cdf35cccC902040dDDbb0c9100B277](https://sepolia.basescan.org/address/0x7DE8B364d4Cdf35cccC902040dDDbb0c9100B277): 47 of 50 paid, 16,450 tUSD |
+| A released programme | [0x7DE8B364d4Cdf35cccC902040dDDbb0c9100B277](https://sepolia.basescan.org/address/0x7DE8B364d4Cdf35cccC902040dDDbb0c9100B277) ([source](https://base-sepolia.blockscout.com/address/0x7DE8B364d4Cdf35cccC902040dDDbb0c9100B277#code)): 47 of 50 paid, 16,450 tUSD |
 
 Each visitor's programme is a fresh instance created by the factory; its address is shown on the first screen.
 
