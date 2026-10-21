@@ -7,12 +7,12 @@ scope: global-candidate
 components: web, build
 triggers: Route segment config "runtime" is not compatible with nextConfig.cacheComponents
 evidence: web/next.config.ts#L1-17
-verified_at: 2026-10-19@981cfb4
+verified_at: 2026-10-21@cec7980
 relates: 
 supersedes: 
 helpful: 0
 harmful: 0
-cite_hash: 3d84252cdd605d4b
+cite_hash: b675f7d8b0677186
 created: 2026-10-19
 source: unknown
 ---

@@ -7,12 +7,12 @@ scope: project
 components: contracts, web
 triggers: 
 evidence: contracts/contracts/OpenTallyFactory.sol#L1-45, web/src/lib/chain.ts
-verified_at: 2026-10-19@981cfb4
+verified_at: 2026-10-21@cec7980
 relates: 
 supersedes: 
 helpful: 0
 harmful: 0
-cite_hash: b22358803ca6439e
+cite_hash: d9276d5e03c60e5b
 created: 2026-10-19
 source: unknown
 ---

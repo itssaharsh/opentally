@@ -1,28 +1,28 @@
 # Build state - opentally
-Updated: 2026-10-19 16:30Z | mode: hackathon | channel: direct | phase: M2 (M1 done)
+Updated: 2026-10-21 20:35Z | mode: hackathon | channel: direct | phase: M3 (submission)
 
 ## Now
-- Phase / current task: M2. Next: T07a (fresh programme per visitor), then T08 (S1 to spec), T09, T10, T11. T07 (Sepolia + Vercel) blocked on test ETH and the user's go-ahead.
-- Last good commit: 64f711a (T06)            Last good deploy: none (local chain only)
+- Phase / current task: T14 final take: recorded from the live URL on Base Sepolia; render and QA in progress. Then T15 submit.
+- Live: https://opentally.vercel.app (Vercel team lack-toes). Repo: https://github.com/itssaharsh/opentally (public).
+- Chain: Base Sepolia. Token 0x0c491dbab75025e2b6f318e6daf3ce98b5a538c2, factory 0x57a62103b0de09a65d84ecf90984ff597085fa75 (Sourcify verified); instances are verified on Blockscout by bytecode match.
 
 ## What worked (with evidence IDs)
-- Contracts: 9 tests incl. wrong key reverts, window gate, batch release, idempotent, holdMany (E0019, E0022).
-- Pipeline end to end on the local chain: 50 verified, 3 held, 47 released (E0015).
-- S1 golden path in the browser on a production build: 47 of 50 paid, 1,050 tUSD, receipt (E0018, E0021).
-- Backup take: ../hackathon-idea/ieee-climatechain-2026/takes/backup-local-20261019-1620-cut.webm (E0024).
+- Live judge flow three times in a row, fresh programme between runs, 47 of 50 each, 0 console errors (E0092).
+- Fold check at 1440x900 and 390x844 on the live URL (E0094). Unseen input and chain-off path (E0093).
+- Contracts 10 tests, web 29 unit tests, 12 browser tests on the local chain (E0082, E0095, E0096).
 
 ## What failed (memory IDs) - do not retry without a new root cause
-- F-0001: Next 16.4 scaffold's cacheComponents rejects route runtime/dynamic exports; removed it.
-- L-0001: browser tests on next dev + Chromium + Hardhat were killed (exit 137) on this shared 8 GB machine; test the production build.
+- F-0003: Sepolia's code pricing puts the factory over the per-transaction gas cap; Base Sepolia instead.
+- F-0004: writes to a just-created contract estimated on a lagging public RPC node revert out of gas; gas is estimated at our latest write's block; sends go to the Base sequencer.
+- Recording: run.py's scroll action hangs under paused page time once a run starts (use eval scrolls); Blockscout does not load under the recorder's clock (captured separately in real time as footage); WSL mirrored networking flapped eth0 and broke Chromium (switched to NAT, see the user's memory).
 
 ## Not tried yet / open questions
-- Sepolia vs Base Sepolia: cost per visitor run (~12 txs to seed + 4 to run). Decide when the faucet is known.
-- Every ledger cell links to /connection/[id], which 404s until T09.
-- Deployer address (account 0 of contracts/.env DEMO_MNEMONIC): 0xC11b85FDDcbB2436Ca2b09b0bfd1d3Bf0105B181, balance 0 on Sepolia.
+- The video must be uploaded by Saharsh (YouTube or Vimeo, public or unlisted); then links.json video, README video line, submit check --video-url.
+- Devpost submission form is filled by Saharsh; the text is docs/devpost-description.md.
 
 ## Changes that need care (migrations applied, deploys, destructive ops)
-- contracts/.env holds the demo mnemonic (git-ignored, mode 600). Never print it. Vercel needs it as DEMO_MNEMONIC.
-- Local Hardhat node must be running for e2e: `cd contracts && ./node_modules/.bin/hardhat node`, then `npm run deploy:local`.
+- contracts/.env holds the demo mnemonic (git-ignored, mode 600). Never print it. Vercel has it as a sensitive DEMO_MNEMONIC.
+- Demo wallets on Base Sepolia hold about 0.009 ETH in total (about 50 more visitors at ~0.00015 each). Top up the deployer 0xC11b85FDDcbB2436Ca2b09b0bfd1d3Bf0105B181 if fresh runs pause.
 
 ## Exact next step
-- Add T07a to the plan; implement instance selection (?programme=, default to the newest unreleased instance), spare seeding after a release, and a low-balance pause.
+- When the render finishes: qa.py --asr, read the contact sheets, fix any issue, hand Saharsh build/final.mp4 to upload.

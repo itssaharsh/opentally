@@ -7,12 +7,12 @@ scope: global-candidate
 components: web
 triggers: second visitor saw the same instance; lock set in /api/run not seen by the page
 evidence: web/src/lib/store.ts#L1-12
-verified_at: 2026-10-19@64f711a
+verified_at: 2026-10-21@cec7980
 relates: 
 supersedes: 
 helpful: 0
 harmful: 0
-cite_hash: 0feb2c0c83ae90a2
+cite_hash: 0a7191737805462d
 created: 2026-10-19
 source: unknown
 ---
