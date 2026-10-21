@@ -2,7 +2,7 @@
 
 Mini-grid grants in Nigeria wait on four private tallies. OpenTally releases each connection's grant on one public rule anyone can re-sum.
 
-**Live demo:** https://opentally.vercel.app (no account or wallet needed)
+**Live demo:** https://opentally.vercel.app (no account or wallet needed) · **Video (3:58):** https://youtu.be/kVIAK3O2q9U
 
 ![The tally after the month 4 release: 47 of 50 connections paid, 3 held, the receipt on the chain](docs/img/tally-released.png)
 

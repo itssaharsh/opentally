@@ -32,3 +32,15 @@ storage-state*.json
 storage_state*.json
 *.storage-state.json
 qa/
+# build-process records and agent instructions stay on the builder's machine; the repository holds what judges read and run
+.prod-build/
+docs/memory/
+AGENTS.md
+CLAUDE.md
+**/AGENTS.md
+**/CLAUDE.md
+contracts/.agents/
+contracts/.claude
+web/.explorer-capture.mjs
+docs/devpost-description.md
+qa/

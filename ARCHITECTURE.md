@@ -1,55 +1,58 @@
-# Architecture: OpenTally
-Mode: hackathon. Last structural change: 2026-10-19 (ADR-0001 to ADR-0004).
+# Architecture
 
-## Overview
-OpenTally releases per-connection mini-grid grants by a stated rule on a public ledger. A funder deposits a test token into a programme contract on Base Sepolia; site gateways sign monthly consumption summaries; the contract verifies the signatures, applies the rule (days active, consumption threshold, sampling window), skips anything the verifier has held, and pays each eligible connection's grant to its site in one transaction. A Next.js app shows the tally, runs the month's release as a streamed pipeline, shows holds, and re-sums the totals from the chain's records.
+OpenTally releases per-connection mini-grid grants by one stated rule on a public ledger. A funder deposits a test token into a programme contract on Base Sepolia. Site gateways sign monthly consumption summaries; the contract verifies every signature, applies the rule (days active, a consumption threshold, a sampling window), skips anything the verifier holds, and pays each eligible connection's grant to its site in one transaction. A Next.js app shows the tally, runs the month's release as a streamed pipeline, lets the verifier lift or keep a hold, and re-sums the totals from the chain's records in the visitor's browser.
+
+![Architecture diagram](docs/architecture-diagram.svg)
 
 ## Components
-| Component | Responsibility | Tech | Why it exists (requirement) | When it fails |
-|---|---|---|---|---|
-| `OpenTally` contract | escrow, site and connection registry, EIP-712 summary verification, rule, holds, release, events | Solidity 0.8.28, OpenZeppelin 5.6 (ERC20 interface, ECDSA, EIP712) | MUST: the release and the record are the product; the Technical & Blockchain line | a revert names the error; nothing moves |
-| `OpenTallyFactory` | creates instances; `latest()` for the app; reset deploys a fresh one | Solidity | the demo reset without a database | the app reads the last known instance from env as fallback |
-| `TestUSD` | 6-decimal test token for the escrow | Solidity (OZ ERC20) | a visible amount per grant without real money | n/a |
-| Web app | S1 tally, S2 connection, S3 rule, S4 about, re-sum drawer | Next.js 16 App Router, Tailwind 4, Motion 14, @number-flow/react | the judged surface; UI-SPEC | partial state on chain outage |
-| Run pipeline (`/api/run`) | signs month 4 summaries with the site gateway keys, submits, screens, holds, waits for the window, releases; streams five steps | Next.js route handler (Node runtime), viem 2 | J1; the demo's main result | a failed step reports the reason; Retry resumes from it |
-| Screen (`lib/screen.ts`) | per-site robust z-scores on total kWh and variance; identical-trace and flat detection | TypeScript, no LLM | the hold path; the AI role as described (a screen that can only hold) | a screen error holds nothing and says so |
-| Seed (`contracts/scripts/seed.ts`) | deterministic 3 sites, 50 connections, months 1 to 4 traces, 3 planted faults; registers, deposits, submits months 1 to 3 | TypeScript, viem | the demo world, reproducible; the reset path | re-run on a fresh instance |
+
+| Component | Responsibility | Tech | When it fails |
+|---|---|---|---|
+| `OpenTally` contract | escrow; site and connection registry; EIP-712 summary verification; the rule; holds and lifts; release; one `Released` record per paid connection | Solidity 0.8.28, OpenZeppelin 5.6 (SafeERC20, EIP712, ECDSA) | a revert names the error and nothing moves |
+| `OpenTallyFactory` | creates a fresh programme instance per demo visitor; emits `Created` | Solidity | the app keeps showing the last released programme |
+| `TestUSD` | 6-decimal test token for the escrow, no value | Solidity, OpenZeppelin ERC20 | n/a |
+| Web app | the tally, the connection view, the rule and keys page, the about page, the re-sum drawer | Next.js 16 App Router, React 19, Tailwind 4, viem 2 | shows the last synced state with a timestamp |
+| Run pipeline (`/api/run`) | signs month 4 summaries with the site gateway keys, submits them (one wrong-key summary is refused first), screens, holds, waits for the window, releases; streams five steps | Next.js route handler, Node runtime | a failed step names the reason; Retry resumes from it |
+| Screen (`web/src/lib/screen.ts`) | per-site robust z-scores on consumption, plus exact checks for identical and flat traces | TypeScript statistics, no model | holds nothing and says so |
+| Seeding (`contracts/scripts/lib/seedChain.ts`, `web/src/lib/reset.ts`) | deterministic 3 sites, 50 connections, months 1 to 4 traces with 3 planted faults; registers, deposits, submits months 1 to 3 | TypeScript, viem | a spare that fails to seed is never shown to a visitor |
 
 ## Data flow
+
 ```mermaid
 flowchart LR
-  A[Administrator on S1] -->|Run month 4 release| R[/api/run SSE/]
-  G[Site gateway keys, server env] -->|sign month 4 summaries| R
+  A[Visitor on the tally] -->|Run month 4 release| R[/api/run, streamed/]
+  G[Site gateway keys, server only] -->|sign month 4 summaries, EIP-712| R
   R -->|submitSummaries| C[(OpenTally on Base Sepolia)]
   R -->|screen traces| S[screen.ts]
-  S -->|hold via verifier key| C
-  R -->|release after window| C
-  C -->|events: Released, Held, ReleaseBatch| W[/api/state and /api/resum/]
+  S -->|holdMany, verifier key| C
+  R -->|release after the window| C
+  C -->|Released, ReleaseBatch, Created events| W[/api/state/]
+  C -->|Released events, read in the browser| B[Re-sum drawer]
   W --> A
   F[Funder key] -->|deposit tUSD| C
 ```
 
 ## External services
-| Service | Used for | Failure mode | Fallback | Limits / quota |
-|---|---|---|---|---|
-| Base Sepolia JSON-RPC (public, env) | reads and server-side writes | rate limit, outage | partial state with timestamp; the step fails with Retry | public endpoints rate-limit by IP; a second endpoint in env |
-| Base Sepolia explorer (Basescan) | receipt and contract links, verified source | down | the hash with Copy | none needed for links |
-| Google Fonts (next/font) | three faces | build-time fetch fails | system stacks | none |
+
+| Service | Used for | Failure mode | Fallback |
+|---|---|---|---|
+| Base Sepolia JSON-RPC (public, load-balanced) | reads and server-side writes | a node a block behind; log range caps; outage | reads pinned to our latest write's block; chunked log reads; partial state with a timestamp; see the technical specification |
+| Base Sepolia sequencer | signed transactions | nonce errors | retried with a fresh nonce |
+| Blockscout and Basescan | receipt and contract links, verified source | down | the hash with Copy |
+| Vercel | hosting the web app | function timeout | the page follows a run on the chain if its stream drops |
 
 ## Key decisions
-- ADR-0001 One programme contract plus a factory, not a database: the ledger is the record the judges score; a reset is a fresh instance.
-- ADR-0002 EIP-712 summaries verified on-chain, signed server-side by demo gateway keys: the security moment (a wrong key reverts) is real, and no meter hardware exists in the window.
-- ADR-0003 A statistical screen in TypeScript, no model provider: the card's "screen that can only hold" needs no LLM; one runtime; no paid route.
-- ADR-0004 Hardhat 3 with viem and node:test; Next.js 16 on Vercel; viem in both: one client library across contracts, tests and app.
 
-## Failure boundaries
-A reverted release changes nothing on-chain; the UI keeps prior state and names the reason. A chain outage degrades reads to the last synced state (kept in memory per server instance and in the browser) with a timestamp. The explorer being down degrades links only. The run route holds a per-instance lock and refuses a second run within two minutes; a crashed run is resumable from its last confirmed step because each step is idempotent on-chain (summaries already submitted revert with `AlreadySubmitted` and are skipped; holds are idempotent; release pays only unpaid connections).
+- **One programme contract plus a factory, not a database.** The ledger is the record anyone can check; a fresh programme is a new instance.
+- **EIP-712 summaries verified on-chain, signed server-side by demo gateway keys.** The security moment (a wrong key is refused) is real, and no meter hardware exists in the build window. A real programme gives each key to its holder.
+- **A statistical screen, no model provider.** A screen that can only hold needs to be explainable more than it needs to be clever: every hold names its reason.
+- **Release is permissionless after the window.** No office sits between the rule and the payment; the verifier stops a payment with a hold, not a recommendation.
+- **Hardhat 3 with viem and node:test; Next.js 16 on Vercel; viem in both.** One client library across contracts, tests and app.
 
 ## Deployment
-Contracts: `contracts/` with Hardhat 3; `npm run deploy:base-sepolia` deploys the token, the factory and a seeded instance; addresses written to `web/src/data/deployment.json` (committed) and verified on Sourcify. Web: `web/` on Vercel (root directory `web`), env: `RPC_URL`, `PROGRAMME_KEY`, `VERIFIER_KEY`, `GATEWAY_KEY_A/B/C`, `FUNDER_KEY` (reset only), `FACTORY_ADDRESS`. Rollback: redeploy the previous Vercel deployment; contracts are immutable, a bad instance is replaced through the factory. Local: `npx hardhat node` plus `npm run seed:local`, the app with `RPC_URL=http://127.0.0.1:8545`.
 
-## Observability
-Route handlers log each step with the instance address, the tx hash and the duration; the evidence ledger in `.prod-build/` holds every check run; Vercel runtime logs for 5xx.
+Contracts: `contracts/` with Hardhat 3; `npm run deploy:base-sepolia` deploys the token and the factory, creates and seeds spare programmes, and writes the addresses to `web/src/data/deployment.json`. Source is verified on Sourcify and Blockscout. Web: `web/` on Vercel, with `DEMO_MNEMONIC` (sensitive) and optionally `RPC_URL`, `NEXT_PUBLIC_RPC_URL`, `SEND_RPC_URL` and `LOG_SPAN`. Contracts are immutable; a bad programme is replaced through the factory.
 
 ## Known tradeoffs
-Keys are server-held for the demo (stated); the window is 30 s on the demo instance (stated beside the terms' 14 days); the screen is statistical, not trained; totals are re-summed from events, which depends on the RPC returning full logs for the instance's block range.
+
+Keys are server-held for the demo, and the page says so. The sampling window is 30 seconds on the demo instead of the terms' 14 days, also stated on screen. The screen is statistics, not a trained model. Summary storage grows with connections; the roadmap rolls each site's month into one Merkle root.
