@@ -67,9 +67,23 @@
 
 Each visitor opens the newest programme instance that has not been run; a run keeps its programme in the address (`?programme=`); after a release, a spare is prepared in the background. `?state=first-run|running|released|partial|error` shows a labelled preview of each state; `?record=1` hides the judge card; `Alt+Shift+R` prepares a fresh programme.
 
+## Working against a public RPC
+
+The live demo runs on Base Sepolia through free, load-balanced RPC endpoints. Two answers in a row can come from different nodes, one a block behind the other, and log queries are capped (sepolia.base.org at 200 blocks, publicnode at 50,000). Each of these broke the demo once before it was handled:
+
+| Problem seen | What the app does |
+|---|---|
+| a read right after our own write returns the old state | reads ask for state at the block of the latest write this server or this browser has seen (`readBlock`, the `ot_at` cookie), and retry while the node has not reached it |
+| a gas estimate for a call to a contract created a moment ago comes back as a plain transfer, and the transaction is mined and reverts out of gas | gas is estimated at that same block, with 30% margin |
+| a stale nonce from a node behind | signed transactions go to Base's sequencer, which answers nonce errors itself; accounts use viem's nonce manager; such errors are retried |
+| two server instances pick the same nonce | fees come in fixed steps, so the second is refused as underpriced and retried instead of replacing the first |
+| a transaction dropped without a word | receipt waits time out after 90 s and the step fails with Retry |
+| an event query over more blocks than the endpoint allows | event reads are split into 50,000-block ranges (`LOG_SPAN`), retried when a range lands on a node behind |
+| the step stream drops on a phone or a proxy | the page follows the release on the chain until it lands |
+
 ## Deployment
 
-`contracts/scripts/deploy-and-seed.ts` deploys the token and the factory, creates `SPARES` programme instances (default 2), seeds each with 3 sites, 50 connections, a 17,500 tUSD deposit and months 1 to 3, and writes `web/src/data/deployment.json`. Account order from one mnemonic: 0 deployer and funder, 1 programme owner, 2 verifier, 3 to 5 site gateways, 6 to 8 site payouts. The web app needs `DEMO_MNEMONIC` and, optionally, `RPC_URL` and `NEXT_PUBLIC_RPC_URL`.
+`contracts/scripts/deploy-and-seed.ts` deploys the token and the factory, creates `SPARES` programme instances (default 2), seeds each with 3 sites, 50 connections, a 17,500 tUSD deposit and months 1 to 3, and writes `web/src/data/deployment.json`. Account order from one mnemonic: 0 deployer and funder, 1 programme owner, 2 verifier, 3 to 5 site gateways, 6 to 8 site payouts. The web app needs `DEMO_MNEMONIC` and, optionally, `RPC_URL`, `NEXT_PUBLIC_RPC_URL`, `SEND_RPC_URL` and `LOG_SPAN`.
 
 ## Tests
 

@@ -19,7 +19,8 @@ export function HoldActions({ id, programme, held }: { id: number; programme: st
     } catch (e) { setNote((e as Error).message); }
     finally { setBusy(null); }
   }
-  if (!held) return null;
+  // after a lift the page refreshes with the connection no longer held: keep the confirmation on screen
+  if (!held) return note ? <p className="text-sm m-0" role="status" data-testid="hold-note">{note}</p> : null;
   return (
     <section className="flex flex-col gap-2">
       <button type="button" onClick={() => act("lift")} disabled={!!busy} className="h-11 rounded-md bg-surface-2 text-ink font-semibold disabled:opacity-60">{busy === "lift" ? "Lifting…" : "Lift hold"}</button>
