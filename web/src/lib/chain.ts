@@ -39,7 +39,8 @@ export function publicClient(): PublicClient {
   // remember the newest block one of our own transactions landed in, so later reads can ask for at least that block
   const wait = c.waitForTransactionReceipt.bind(c);
   c.waitForTransactionReceipt = (async (args: Parameters<typeof wait>[0]) => {
-    const r = await wait(args);
+    // never wait forever: a transaction the sequencer dropped surfaces as a failed step with Retry
+    const r = await wait({ timeout: chainCfg.minGasEth > 0 ? 90_000 : undefined, ...args });
     if (!store.lastWrite || r.blockNumber > store.lastWrite) store.lastWrite = r.blockNumber;
     return r;
   }) as typeof wait;

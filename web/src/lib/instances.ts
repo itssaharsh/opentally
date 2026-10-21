@@ -13,6 +13,7 @@ export function pickInstance(list: InstanceInfo[], requested?: string | null, bu
   const lastReleased = byNewest.find((i) => i.paidCount > 0) ?? null;
   const req = requested?.toLowerCase();
   const pinnedTo = req ? list.find((i) => i.address.toLowerCase() === req) : undefined;
-  const shown = pinnedTo ?? fresh[0] ?? byNewest[0];
+  // with no fresh spare, show the last released programme (or any fully seeded one), never one still being seeded
+  const shown = pinnedTo ?? fresh[0] ?? lastReleased ?? byNewest.find((i) => i.ready !== false) ?? byNewest[0];
   return { shown, fresh: available(shown), pinned: !!pinnedTo, spares: fresh.length, lastReleased };
 }

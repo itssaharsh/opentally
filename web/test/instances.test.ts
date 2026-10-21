@@ -54,3 +54,10 @@ it("does not hand out a spare that is still being seeded", () => {
   expect(p.shown.index).toBe(1);
   expect(p.spares).toBe(1);
 });
+
+it("with no fresh spare, shows the last released programme rather than one still being seeded", () => {
+  const p = pickInstance([inst(1, { paidCount: 47, demoMonthSubmitted: true }), inst(2, { ready: false })]);
+  expect(p.shown.index).toBe(1);
+  expect(p.fresh).toBe(false);
+  expect(p.spares).toBe(0);
+});

@@ -1,5 +1,6 @@
 import "server-only";
 import { mnemonicToAccount, type HDAccount } from "viem/accounts";
+import { nonceManager } from "viem";
 import deployment from "../data/deployment.json";
 import { chainInfo } from "./chains";
 
@@ -17,6 +18,13 @@ export function demoMnemonic() {
 }
 export function roleAccount(index: number): HDAccount {
   return mnemonicToAccount(demoMnemonic(), { addressIndex: index });
+}
+/** The same account for sending: nonces handed out in order within this server process, never reused. */
+const signers = new Map<number, HDAccount>();
+export function signerAccount(index: number): HDAccount {
+  let a = signers.get(index);
+  if (!a) { a = mnemonicToAccount(demoMnemonic(), { addressIndex: index, nonceManager }); signers.set(index, a); }
+  return a;
 }
 export const ROLE = { owner: 1, verifier: 2, gatewayA: 3, gatewayB: 4, gatewayC: 5 } as const;
 export function gatewayFor(siteIndex: number) { return roleAccount(ROLE.gatewayA + siteIndex); }

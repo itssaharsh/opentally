@@ -11,3 +11,4 @@ Active: 5 | archived/superseded: 0 | search: `python3 .prod-build/pb.py mem find
 | F-0002 | failure | web | Module-level state is not shared between a Next.js page and a route handler | failures/F-0002-module-level-state-is-not-shared-between-a-next-.md |
 | L-0001 | lesson | web, qa | Run browser tests against next build plus next start, not next dev, on a shared 8 GB machine | lessons/L-0001-run-browser-tests-against-next-build-plus-next-s.md |
 - F-0003 Sepolia code pricing puts the factory over the per-transaction gas cap; use Base Sepolia
+- F-0004 Writes to a just-created contract estimated on a lagging RPC node revert out of gas; estimate at our latest write's block

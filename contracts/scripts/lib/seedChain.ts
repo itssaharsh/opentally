@@ -36,24 +36,27 @@ export async function seedInstance(opts: {
   const { viem, publicClient, tally, token, roles, months } = opts;
   const chainId = await publicClient.getChainId();
   const lagging = chainId !== 31337;
+  // fixed gas limits on a public network: a node that has not yet seen the new instance would estimate a call to it
+  // as a plain transfer, and the transaction would be mined and revert out of gas (web/src/lib/wallets.ts gasAt)
+  const GAS = (g: bigint) => (lagging ? { gas: g } : {});
   const tx = async (f: () => Promise<Hex>) => { const h = await retryLag(f, lagging); await publicClient.waitForTransactionReceipt({ hash: h }); return h; };
   const seed = buildSeed();
   const ownerTally = await viem.getContractAt("OpenTally", tally.address, { client: { wallet: roles.owner } });
   for (let i = 0; i < SITES.length; i++) {
     const s = SITES[i];
-    await tx(() => ownerTally.write.registerSite([`${s.name}, ${s.town}`, roles.payouts[i], roles.gateways[i].account!.address]));
+    await tx(() => ownerTally.write.registerSite([`${s.name}, ${s.town}`, roles.payouts[i], roles.gateways[i].account!.address], GAS(300_000n)));
   }
   const inputs = seed.map((c) => ({
     siteId: c.siteIndex, meterHash: hashString(c.meterSerial), customerHash: hashString(`customer:${c.code}`),
     gpsCell: hashString(c.gpsCell), commissionedAt: BigInt(c.commissionedAt),
   }));
   for (let i = 0; i < inputs.length; i += 25) {
-    await tx(() => ownerTally.write.registerConnections([inputs.slice(i, i + 25)]));
+    await tx(() => ownerTally.write.registerConnections([inputs.slice(i, i + 25)], GAS(4_000_000n)));
   }
   const funderToken = await viem.getContractAt("TestUSD", token.address, { client: { wallet: roles.funder } });
-  await tx(() => funderToken.write.approve([tally.address, DEPOSIT_TUSD]));
+  await tx(() => funderToken.write.approve([tally.address, DEPOSIT_TUSD], GAS(120_000n)));
   const funderTally = await viem.getContractAt("OpenTally", tally.address, { client: { wallet: roles.funder } });
-  await tx(() => funderTally.write.deposit([DEPOSIT_TUSD]));
+  await tx(() => funderTally.write.deposit([DEPOSIT_TUSD], GAS(200_000n)));
   for (const month of months) {
     const items = [] as any[]; const sigs = [] as Hex[];
     for (const c of seed) {
@@ -62,7 +65,7 @@ export async function seedInstance(opts: {
       items.push(item);
       sigs.push(await signSummary(roles.gateways[c.siteIndex], tally.address, chainId, item));
     }
-    await tx(() => ownerTally.write.submitSummaries([month, items, sigs]));
+    await tx(() => ownerTally.write.submitSummaries([month, items, sigs], GAS(7_000_000n)));
   }
   return { seed, grant: GRANT_TUSD, deposit: DEPOSIT_TUSD, rule: RULE, programmeName: PROGRAMME_NAME };
 }

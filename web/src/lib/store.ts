@@ -6,6 +6,7 @@ type Store = {
   instanceList: { at: number; list: unknown[] } | null;
   seeding: Promise<unknown> | null;
   createdScan?: { to: bigint; logs: unknown[] };
+  lastTopUp?: number;
   lastWrite?: bigint; // the newest block this server has seen one of its own transactions land in
 };
 const g = globalThis as unknown as { __opentally?: Store };

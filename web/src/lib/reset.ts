@@ -7,6 +7,7 @@ import { wallet, topUp, funds } from "./wallets";
 import { isFresh } from "./instances";
 import programme from "../data/programme.json";
 import { store } from "./store";
+import { after } from "next/server";
 
 type Conn = { id: number; code: string; siteIndex: number; meterSerial: string; gpsCell: string; commissionedAt: number; summaries: Record<string, { activeDays: number; kwhMilli: number; traceHash: Hex }> };
 type Programme = { programmeName: string; sites: { code: string; name: string; town: string; count: number }[]; connections: Conn[] };
@@ -86,4 +87,14 @@ export async function ensureSpares(want = 2): Promise<number> {
   })();
   store.seeding = run;
   try { return (await run) as number; } finally { store.seeding = null; }
+}
+
+/** Top the spares back up in the background when a page load finds fewer than `want`. At most one attempt a minute
+ *  per server instance, so a burst of visitors does not start a burst of seedings. */
+export function topUpSparesLater(spares: number, want = 2) {
+  if (spares >= want || store.seeding) return;
+  const now = Date.now();
+  if (store.lastTopUp && now - store.lastTopUp < 60_000) return;
+  store.lastTopUp = now;
+  after(async () => { try { await ensureSpares(want); } catch (e) { console.error("spare top-up failed:", (e as Error).message.split("\n").slice(0, 2).join(" ")); } });
 }
