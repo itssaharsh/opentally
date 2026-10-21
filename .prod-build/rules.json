@@ -6,7 +6,11 @@
       "source": "https://cmte.ieee.org/turkiye-blockchain/hackatlon/",
       "dq": false,
       "kind": "attest",
-      "added": "2026-10-19T13:32:06Z"
+      "added": "2026-10-19T13:32:06Z",
+      "confirmed": {
+        "evidence": "https://opentally.vercel.app on Base Sepolia: three browser runs in a row, 47 of 50 each (E0092); video 0:20 to 3:02",
+        "at": "2026-10-21T21:35:37Z"
+      }
     },
     {
       "id": "repo-docs",
@@ -34,7 +38,7 @@
     },
     {
       "id": "video-3min",
-      "quote": "Demo Video (3\u20135 mins): Showcase your project in action, highlighting key features and functionality. (Devpost page, read 2026-10-21; the organiser page says '3-minute video demonstration')",
+      "quote": "Demo Video (3–5 mins): Showcase your project in action, highlighting key features and functionality. (Devpost page, read 2026-10-21; the organiser page says '3-minute video demonstration')",
       "source": "https://ieee-climatechain-hack.devpost.com/",
       "dq": false,
       "kind": "attest",
@@ -112,7 +116,11 @@
       "source": "https://ieee-climatechain-hack.devpost.com/",
       "dq": false,
       "kind": "attest",
-      "added": "2026-10-21T15:00:00Z"
+      "added": "2026-10-21T15:00:00Z",
+      "confirmed": {
+        "evidence": "Track named on the video's first card (0:00) and in its closing line (3:48); Devpost text section 'Track'; README line 9",
+        "at": "2026-10-21T21:35:37Z"
+      }
     }
   ]
 }
