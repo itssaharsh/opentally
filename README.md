@@ -6,7 +6,7 @@ Mini-grid grants in Nigeria wait on four private tallies. OpenTally releases eac
 
 ![The tally after the month 4 release: 47 of 50 connections paid, 3 held, the receipt on the chain](docs/img/tally-released.png)
 
-Built for the IEEE ClimateChain Global Hackathon 2026 (Track 2, Renewable Energy & Grid Management). Planning started on 19 October 2026 from a research package kept outside this repository; the first commit is dated after that.
+Built for the IEEE ClimateChain Global Hackathon 2026 (track: Renewable Energy & Energy Trading). Planning started on 19 October 2026 from a research package kept outside this repository; the first commit is dated after that.
 
 ## What it does
 

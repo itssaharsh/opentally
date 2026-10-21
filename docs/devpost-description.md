@@ -2,6 +2,14 @@ Mini-grid grants in Nigeria wait on four private tallies. OpenTally releases eac
 
 Live demo: https://opentally.vercel.app · Code: https://github.com/itssaharsh/opentally
 
+## Track
+
+**Renewable Energy & Energy Trading.** The track asks for decentralised, efficient energy systems, including microgrid coordination and tokenised incentives for clean energy. OpenTally is the payment rail for the incentive that already pays for most African mini-grid connections, the per-connection results-based grant, settled on a public ledger by one rule.
+
+## Who it is for
+
+The mini-grid developer's finance lead, who pre-finances each site while a claim moves through four offices; the programme manager, who has to defend a total outsiders cannot check; and the funder or verifier, who today reconciles spreadsheets by hand.
+
 ## Inspiration
 
 Results-based financing pays mini-grid developers a fixed grant for each household they connect, after verification: US$350 under Nigeria's Electrification Project, US$592 under the SEforALL Universal Energy Facility. The DARES verification terms tell the independent verifier to build its own dashboard and check it against three other tallies, and say its recommendations are not binding. A study of thirteen such programmes found that only 14% of US$9.1 billion committed to African mini-grids had been disbursed by early 2025 and asked for predictable, on-time disbursement. Developers build first and wait months to be paid; outsiders cannot rebuild the totals.
@@ -19,6 +27,14 @@ Solidity contracts (escrow, EIP-712 summaries, rule, holds, release, a factory f
 ## Challenges we ran into
 
 Making the release need no trusted caller while the verifier can still stop any payment. Giving each judge a fresh programme when the first judge's run would otherwise leave everyone else looking at a finished one. Keeping state shared between Next.js routes and pages, which do not share module state. Moving from Sepolia to Base Sepolia when Sepolia's code pricing put the factory over the per-transaction gas cap, then hardening every read against load-balanced public RPC nodes that answer a block behind and cap log queries.
+
+## Climate impact
+
+A developer paid in about a month, instead of three to six, puts the same money into the next site sooner, and each household connected sooner stops burning kerosene or running a diesel generator sooner. For one programme window of 14,000 connections, the central case brings forward about 455 tCO2 of avoided emissions (low 0, high 1,517), at 0.26 tCO2 per household a year. The low case is zero on purpose: where the size of the fund is the limit, paying faster changes cash flow and the record, not the number of connections. The working is in docs/climate-impact.md.
+
+## Scale and adoption
+
+A programme adopts OpenTally by running its own instance through the factory: developers' metering gateways sign their summaries, and the verifier keeps its role, now with a hold that stops a payment instead of a recommendation that is not binding. A release costs about 20,000 gas per connection and a summary about 83,000; the roadmap pages the release and rolls each site's month into one Merkle root, so a programme of tens of thousands of connections fits in ordinary blocks. Details in docs/adoption-strategy.md and docs/scalability-roadmap.md.
 
 ## What is real and what is not
 

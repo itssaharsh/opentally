@@ -3,11 +3,11 @@
   "start": "2026-10-05T00:00:00Z",
   "end": "2026-10-25T14:00:00Z",
   "freeze": "2026-10-24T14:00:00Z",
-  "source": "https://cmte.ieee.org/turkiye-blockchain/hackatlon/",
-  "provisional": "the start hour is not published (5 Oct taken as 00:00 UTC); the Devpost page refused automated reading and its deadline is relayed by two participants as 17:00 +03 = 14:00 UTC, while the organiser page says 23:59 UTC; re-read the Devpost page before submitting",
+  "source": "https://ieee-climatechain-hack.devpost.com/ (read 2026-10-21: 'Deadline Oct 25, 2026 @ 2:00pm UTC')",
+  "provisional": "start hour not published; 5 Oct taken as 00:00 UTC",
   "history": "strict",
   "tz_min": 330,
-  "video_cap_s": 180,
+  "video_cap_s": 300,
   "card_chars": 140,
-  "set_at": "2026-10-19T13:31:13Z"
+  "set_at": "2026-10-21T15:13:16Z"
 }
